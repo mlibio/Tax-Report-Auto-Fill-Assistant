@@ -1,51 +1,57 @@
 <template>
-  <div class="mb-2 mt-1 flex items-start px-4">
-    <ui-popover class="mr-2 h-8">
-      <template #trigger>
-        <span
-          :title="t('workflow.sidebar.workflowIcon')"
-          class="inline-block h-full cursor-pointer"
-        >
-          <ui-img
-            v-if="workflow.icon.startsWith('http')"
-            :src="workflow.icon"
-            class="h-8 w-8"
-          />
-          <v-remixicon v-else :name="workflow.icon" size="26" class="mt-1" />
-        </span>
-      </template>
-      <div class="w-56">
-        <p class="mb-2">{{ t('workflow.sidebar.workflowIcon') }}</p>
-        <div class="mb-2 grid grid-cols-5 gap-1">
+  <div
+    class="mb-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-900"
+  >
+    <div class="flex items-start">
+      <ui-popover class="mr-2 h-8">
+        <template #trigger>
           <span
-            v-for="icon in icons"
-            :key="icon"
-            class="hoverable inline-block cursor-pointer rounded-lg p-2 text-center"
-            @click="$emit('update', { icon })"
+            :title="t('workflow.sidebar.workflowIcon')"
+            class="inline-block h-full cursor-pointer"
           >
-            <v-remixicon :name="icon" />
+            <ui-img
+              v-if="workflow.icon.startsWith('http')"
+              :src="workflow.icon"
+              class="h-8 w-8"
+            />
+            <v-remixicon v-else :name="workflow.icon" size="26" class="mt-1" />
           </span>
+        </template>
+        <div class="w-56">
+          <p class="mb-2">{{ t('workflow.sidebar.workflowIcon') }}</p>
+          <div class="mb-2 grid grid-cols-5 gap-1">
+            <span
+              v-for="icon in icons"
+              :key="icon"
+              class="hoverable inline-block cursor-pointer rounded-lg p-2 text-center"
+              @click="$emit('update', { icon })"
+            >
+              <v-remixicon :name="icon" />
+            </span>
+          </div>
+          <ui-input
+            :model-value="workflow.icon.startsWith('http') ? workflow.icon : ''"
+            type="url"
+            placeholder="http://example.com/img.png"
+            label="Icon URL"
+            @change="updateWorkflowIcon"
+          />
         </div>
-        <ui-input
-          :model-value="workflow.icon.startsWith('http') ? workflow.icon : ''"
-          type="url"
-          placeholder="http://example.com/img.png"
-          label="Icon URL"
-          @change="updateWorkflowIcon"
-        />
+      </ui-popover>
+      <div class="flex-1 overflow-hidden">
+        <p
+          class="text-overflow mt-1 text-base font-semibold leading-tight text-slate-900 dark:text-white"
+        >
+          {{ workflow.name }}
+        </p>
+        <p
+          class="cursor-pointer text-sm leading-tight text-slate-500 dark:text-gray-300"
+          :class="descriptionCollapsed ? 'line-clamp' : 'whitespace-pre-wrap'"
+          @click="descriptionCollapsed = !descriptionCollapsed"
+        >
+          {{ workflow.description }}
+        </p>
       </div>
-    </ui-popover>
-    <div class="flex-1 overflow-hidden">
-      <p class="text-overflow mt-1 text-lg font-semibold leading-tight">
-        {{ workflow.name }}
-      </p>
-      <p
-        class="cursor-pointer leading-tight"
-        :class="descriptionCollapsed ? 'line-clamp' : 'whitespace-pre-wrap'"
-        @click="descriptionCollapsed = !descriptionCollapsed"
-      >
-        {{ workflow.description }}
-      </p>
     </div>
   </div>
   <ui-input
@@ -55,9 +61,9 @@
       shortcut['action:search'].readable
     })`"
     prepend-icon="riSearch2Line"
-    class="mt-4 mb-2 w-full px-4"
+    class="workflow-block-search mb-3 w-full"
   />
-  <div class="scroll relative flex-1 overflow-auto bg-scroll px-4">
+  <div class="scroll relative flex-1 overflow-auto bg-scroll pr-1">
     <workflow-block-list
       v-if="pinnedBlocksList.length > 0"
       :model-value="true"
@@ -126,7 +132,16 @@ const icons = [
 ];
 
 const copyBlocks = getBlocks();
-delete copyBlocks['block-package'];
+[
+  'ai-workflow',
+  'block-package',
+  'google-drive',
+  'google-sheets',
+  'google-sheets-drive',
+  'webhook',
+].forEach((blockId) => {
+  delete copyBlocks[blockId];
+});
 
 const blocksArr = Object.entries(copyBlocks).map(([key, block]) => {
   const localeKey = `workflow.blocks.${key}.name`;
@@ -156,6 +171,7 @@ const blocks = computed(() =>
 );
 const pinnedBlocksList = computed(() =>
   pinnedBlocks.value
+    .filter((id) => copyBlocks[id])
     .map((id) => {
       const namePath = `workflow.blocks.${id}.name`;
 

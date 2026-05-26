@@ -32,6 +32,7 @@
     "action": "操作 | 操作",
     "packages": "包",
     "storage": "存储",
+    "flowCanvas": "流程画布",
     "editor": "编辑器",
     "running": "运行",
     "globalData": "全局数据",
@@ -48,7 +49,10 @@
     "category": "分类",
     "optional": "可选",
     "0disable": "0 到禁用",
-    "millisecond": "毫秒 | 毫秒"
+    "millisecond": "毫秒 | 毫秒",
+    "taxFiling": "报表数据",
+    "productName": "税务自动填报助手",
+    "productTagline": "本地工作流 · 自动填报"
   },
   "message": {
     "noBlock": "没有模块",

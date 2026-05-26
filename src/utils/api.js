@@ -1,44 +1,10 @@
 import BrowserAPIService from '@/service/browser-api/BrowserAPIService';
-import secrets from 'secrets';
 import { isObject, parseJSON } from './helper';
 
-export async function fetchApi(path, options = {}) {
-  const urlPath = path.startsWith('/') ? path : `/${path}`;
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(options?.headers || {}),
-  };
-
-  const { session } = (await BrowserAPIService.storage.local.get(
-    'session'
-  )) || { session: null };
-  if (session && options?.auth) {
-    delete options.auth;
-
-    let token = session.access_token;
-
-    if (Date.now() > (session.expires_at - 2000) * 1000) {
-      const response = await fetch(
-        `${secrets.baseApiUrl}/me/refresh-auth-session?token=${session.refresh_token}`
-      );
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.message);
-      }
-
-      await BrowserAPIService.storage.local.set({ session: result });
-      token = result.access_token;
-    }
-
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const url = `${secrets.baseApiUrl}${urlPath}`;
-
-  return fetch(url, {
-    ...options,
-    headers,
-  });
+export async function fetchApi(path) {
+  throw new Error(
+    `Network access is disabled in local-only mode: ${path || 'unknown'}`
+  );
 }
 
 export async function cacheApi(key, callback, useCache = true) {
@@ -156,108 +122,9 @@ export async function getUserWorkflows(useCache = true) {
 }
 
 export function validateOauthToken() {
-  let retryCount = 0;
-
-  const startFetch = async () => {
-    try {
-      const { sessionToken } = await BrowserAPIService.storage.local.get(
-        'sessionToken'
-      );
-      if (!sessionToken) return null;
-
-      const response = await fetch(
-        `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${sessionToken.access}`
-      );
-      if (response.status === 400 && sessionToken.refresh && retryCount <= 3) {
-        const refreshResponse = await fetchApi(
-          `/me/refresh-session?token=${sessionToken.refresh}`,
-          { auth: true }
-        );
-        const refreshResult = await refreshResponse.json();
-
-        if (!refreshResponse.ok) {
-          throw new Error(refreshResult.message);
-        }
-
-        retryCount += 1;
-
-        const result = await startFetch();
-        return result;
-      }
-
-      return null;
-    } catch (error) {
-      console.error(error);
-    }
-
-    return null;
-  };
-
-  return startFetch();
+  return Promise.resolve(null);
 }
 
-export async function fetchGapi(url, resource = {}, options = {}) {
-  const { sessionToken } = await BrowserAPIService.storage.local.get(
-    'sessionToken'
-  );
-  if (!sessionToken) throw new Error('unauthorized');
-
-  const { search, origin, pathname } = new URL(url);
-  const searchParams = new URLSearchParams(search);
-  searchParams.set('access_token', sessionToken.access);
-
-  let tryCount = 0;
-  const maxTry = options?.tryCount || 3;
-
-  const startFetch = async () => {
-    const response = await fetch(
-      `${origin}${pathname}?${searchParams.toString()}`,
-      resource
-    );
-
-    const result = parseJSON(await response.text(), null);
-    const insufficientScope =
-      response.status === 403 &&
-      result?.error?.message.includes('insufficient authentication scopes');
-    if (
-      (!sessionToken.access || response.status === 401 || insufficientScope) &&
-      sessionToken.refresh
-    ) {
-      const refreshResponse = await fetchApi(
-        `/me/refresh-session?token=${sessionToken.refresh}`,
-        { auth: true }
-      );
-      const refreshResult = await refreshResponse.json();
-
-      if (!refreshResponse.ok) {
-        throw new Error(refreshResult.message);
-      }
-
-      searchParams.set('access_token', refreshResult.token);
-      sessionToken.access = refreshResult.token;
-
-      await BrowserAPIService.storage.local.set({ sessionToken });
-
-      if (tryCount < maxTry) {
-        tryCount += 1;
-        const awaitResult = await startFetch();
-
-        return awaitResult;
-      }
-
-      throw new Error('unauthorized');
-    }
-    if (!response.ok) {
-      throw new Error(result?.error?.message, { cause: result });
-    }
-
-    if (options?.response) {
-      return { response, result };
-    }
-
-    return result;
-  };
-
-  const result = await startFetch();
-  return result;
+export async function fetchGapi(url) {
+  throw new Error(`Google API access is disabled in local-only mode: ${url}`);
 }

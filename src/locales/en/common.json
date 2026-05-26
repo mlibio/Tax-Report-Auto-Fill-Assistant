@@ -32,6 +32,7 @@
     "action": "Action | Actions",
     "packages": "Packages",
     "storage": "Storage",
+    "flowCanvas": "Flow canvas",
     "editor": "Editor",
     "running": "Running",
     "globalData": "Global data",
@@ -48,7 +49,10 @@
     "category": "Category",
     "optional": "Optional",
     "0disable": "0 to disable",
-    "millisecond": "millisecond | milliseconds"
+    "millisecond": "millisecond | milliseconds",
+    "taxFiling": "报表数据",
+    "productName": "税务自动填报助手",
+    "productTagline": "本地工作流 · 自动填报"
   },
   "message": {
     "noBlock": "No block",

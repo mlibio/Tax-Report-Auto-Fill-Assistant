@@ -1,0 +1,93 @@
+{
+  "common": {
+    "taxFiling": "VAT Filing"
+  },
+  "tax": {
+    "page": {
+      "title": "VAT Filing Assistant",
+      "subtitle": "Import the VAT general taxpayer Excel template, run three layers of validation, and auto-fill the Shanghai eTax website.",
+      "schemaVersion": "Template version {version}",
+      "localBadge": "Local",
+      "import": "Import Excel",
+      "importHint": "Accepts .xls / .xlsx. The file is parsed locally in your browser; nothing is uploaded.",
+      "preview": "Preview",
+      "previewEmpty": "Once a file is imported, taxpayer info and key VAT lines will appear here.",
+      "report": "Validation Report",
+      "reportEmpty": "Click Run Validation to see the detailed report.",
+      "runValidation": "Run Validation",
+      "gate": "Soft Gate & Execution",
+      "override": "I have reviewed the errors above and accept the risk to continue.",
+      "dryRun": "Dry-run (validation only)",
+      "startFiling": "Open eTax & start auto-fill",
+      "exportDraft": "Export draft (JSON)",
+      "history": "Filing History",
+      "historyEmpty": "No filing runs yet.",
+      "chooseFile": "Choose VAT Excel file",
+      "fileNotSelected": "No file selected yet",
+      "fileSelected": "Selected {name} ({size} KB)",
+      "parseFailed": "Parse failed: {msg}",
+      "parseGeneric": "Parse failed",
+      "readFail": "Could not read file",
+      "stepImport": "1. Import Excel",
+      "stepPreview": "2. Preview",
+      "stepReport": "3. Validation report",
+      "stepGate": "4. Soft gate & run",
+      "stepHistory": "5. History",
+      "parsedAt": "Parsed at {time}",
+      "gatePassed": "Gate cleared",
+      "gateHint": "If errors appear, confirm below before running. All acknowledgements and runs are logged locally for audit.",
+      "tableLine": "Line",
+      "tableItem": "Item",
+      "tableMonth": "General — current month",
+      "tableYear": "General — YTD",
+      "counts": {
+        "error": "Errors {n}",
+        "warning": "Warnings {n}",
+        "info": "Info {n}"
+      },
+      "findingField": "Field: {field} · Rule: {ruleId}",
+      "noFindings": "No blocking issues; you can proceed.",
+      "refresh": "Refresh",
+      "viewDetail": "Details",
+      "statusLabel": "Status",
+      "defaultRunName": "VAT filing",
+      "toast": {
+        "parseOk": "Parsed successfully",
+        "dryRun": "Dry-run done: {e} errors, {w} warnings",
+        "workflowStarted": "Workflow started; check Logs for progress",
+        "triggerFail": "Failed to start",
+        "needGate": "Import data and clear the gate first",
+        "builtinMissing": "Built-in workflow missing; refresh the dashboard"
+      }
+    },
+    "meta": {
+      "taxpayerName": "Taxpayer name",
+      "taxpayerNo": "Taxpayer ID",
+      "periodRange": "Tax period",
+      "legalPerson": "Legal representative",
+      "industry": "Industry",
+      "phone": "Phone"
+    },
+    "rules": {
+      "severity": {
+        "error": "Error",
+        "warning": "Warning",
+        "info": "Info"
+      }
+    },
+    "blocks": {
+      "tax-vat-load": {
+        "name": "VAT — Load Excel",
+        "description": "Parse the VAT Excel template into the internal data model."
+      },
+      "tax-vat-validate": {
+        "name": "VAT — Validate",
+        "description": "Run structural / business / cross-sheet validation rules."
+      },
+      "tax-vat-fill": {
+        "name": "VAT — Auto-fill",
+        "description": "Fill the parsed VAT model into the Shanghai eTax web form."
+      }
+    }
+  }
+}

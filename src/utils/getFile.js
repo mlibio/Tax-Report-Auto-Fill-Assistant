@@ -1,19 +1,42 @@
 export function readFileAsBase64(blob) {
   return new Promise((resolve) => {
+    if (typeof blob === 'string' && blob.startsWith('data:')) {
+      resolve(blob);
+      return;
+    }
+
+    const fileBlob =
+      blob instanceof Blob
+        ? blob
+        : new Blob([
+            blob instanceof ArrayBuffer || ArrayBuffer.isView(blob)
+              ? blob
+              : `${blob || ''}`,
+          ]);
+
     const reader = new FileReader();
     reader.onload = () => {
       resolve(reader.result);
     };
-    reader.readAsDataURL(blob);
+    reader.readAsDataURL(fileBlob);
   });
 }
 
+function readResponse(response, responseType = 'blob') {
+  const type = responseType || 'blob';
+
+  if (type === 'arraybuffer') return response.arrayBuffer();
+
+  return typeof response[type] === 'function'
+    ? response[type]()
+    : response.blob();
+}
 async function downloadFile(url, options) {
   const response = await fetch(url);
   if (!response.ok) throw new Error(response.statusText);
 
   const type = options.responseType || 'blob';
-  const result = await response[type]();
+  const result = await readResponse(response, type);
 
   if (options.returnValue) {
     return result;
@@ -68,7 +91,9 @@ function getLocalFile(path, options) {
         .then((response) => {
           if (!response.ok) throw new Error(response.statusText);
 
-          if (options.returnValue) return response.text();
+          if (options.returnValue) {
+            return readResponse(response, options.responseType);
+          }
 
           return response.blob();
         })

@@ -10,12 +10,10 @@ import browser from 'webextension-polyfill';
 import { useStore } from '@/stores/main';
 import { sendMessage } from '@/utils/message';
 import { useWorkflowStore } from '@/stores/workflow';
-import { useHostedWorkflowStore } from '@/stores/hostedWorkflow';
 import { loadLocaleMessages, setI18nLanguage } from '@/lib/vueI18n';
 
 const store = useStore();
 const workflowStore = useWorkflowStore();
-const hostedWorkflowStore = useHostedWorkflowStore();
 
 const retrieved = ref(false);
 
@@ -34,7 +32,6 @@ onMounted(async () => {
     await setI18nLanguage(store.settings.locale);
 
     await workflowStore.loadData();
-    await hostedWorkflowStore.loadData();
 
     retrieved.value = true;
   } catch (error) {
@@ -45,8 +42,24 @@ onMounted(async () => {
 </script>
 <style>
 body {
-  height: 500px;
-  width: 350px;
-  font-size: 16px;
+  width: 300px;
+  min-height: 360px;
+  max-height: 520px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  font-size: 13px;
+}
+
+.Vue-Toastification__container {
+  left: 8px !important;
+  right: 8px !important;
+  top: 8px !important;
+  width: auto !important;
+  min-width: 0 !important;
+}
+
+.Vue-Toastification__toast {
+  min-width: 0 !important;
+  max-width: calc(100vw - 16px) !important;
 }
 </style>

@@ -7,6 +7,13 @@ dbLogs.version(1).stores({
   histories: '++id, logId',
   items: '++id, name, endedAt, workflowId, status, collectionId',
 });
+dbLogs.version(2).stores({
+  ctxData: '++id, logId',
+  logsData: '++id, logId',
+  histories: '++id, logId',
+  items:
+    '++id, name, startedAt, endedAt, workflowId, status, collectionId, duration, triggerType, errorMessage',
+});
 
 export const defaultLogItem = {
   name: '',
@@ -16,6 +23,10 @@ export const defaultLogItem = {
   parentLog: null,
   workflowId: null,
   status: 'success',
+  duration: 0,
+  triggerType: '',
+  errorMessage: '',
+  errorDetails: null,
   collectionId: null,
 };
 

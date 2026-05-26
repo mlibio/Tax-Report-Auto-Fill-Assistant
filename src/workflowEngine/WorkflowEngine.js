@@ -2,7 +2,6 @@ import dbStorage from '@/db/storage';
 import BrowserAPIService, {
   IS_BROWSER_API_AVAILABLE,
 } from '@/service/browser-api/BrowserAPIService';
-import { fetchApi } from '@/utils/api';
 import { getBlocks } from '@/utils/getSharedData';
 import { clearCache, isObject, parseJSON, sleep } from '@/utils/helper';
 import { MessageListener } from '@/utils/message';
@@ -45,6 +44,8 @@ class WorkflowEngine {
     this.historyCtxData = {};
     this.eventListeners = {};
     this.preloadScripts = [];
+    this.taxVatAdaptiveNotices = [];
+    this.taxVatAdaptiveNoticeTarget = null;
 
     this.columns = {
       column: {
@@ -118,6 +119,35 @@ class WorkflowEngine {
     };
 
     // this.messageListener = new MessageListener('workflow-engine');
+  }
+
+  async showTaxVatAdaptiveNotices(status) {
+    if (status !== 'success' || !this.taxVatAdaptiveNotices?.length) return;
+
+    const target = this.taxVatAdaptiveNoticeTarget;
+    if (!target?.tabId) return;
+
+    const message = [
+      '税务页面适配汇总',
+      '',
+      ...this.taxVatAdaptiveNotices.map((item, index) => `${index + 1}. ${item}`),
+    ].join('\n');
+    const payload = {
+      type: 'tax-vat-adaptive-summary-alert',
+      data: { message },
+    };
+
+    try {
+      const options =
+        typeof target.frameId === 'number' ? { frameId: target.frameId } : {};
+      await BrowserAPIService.tabs.sendMessage(target.tabId, payload, options);
+    } catch (_) {
+      try {
+        await BrowserAPIService.tabs.sendMessage(target.tabId, payload);
+      } catch (error) {
+        console.warn('Failed to show tax vat adaptive summary alert', error);
+      }
+    }
   }
 
   async init() {
@@ -328,6 +358,11 @@ class WorkflowEngine {
         this.referenceData.variables[`$$${name}`] = value;
       });
 
+      const runtimeVars = this.options?.data?.variables;
+      if (runtimeVars && isObject(runtimeVars)) {
+        Object.assign(this.referenceData.variables, runtimeVars);
+      }
+
       this.addRefDataSnapshot('variables');
 
       await this.states.add(this.id, {
@@ -368,8 +403,11 @@ class WorkflowEngine {
 
     const isLimit = this.history?.length >= this.logsLimit;
     const notErrorLog = detail.type !== 'error';
+    const forceSaveLog = detail.forceSaveLog === true;
+    const syncRunningState = detail.syncRunningState === true;
 
-    if ((isLimit || !this.saveLog) && notErrorLog) return;
+    if (isLimit && notErrorLog && !forceSaveLog) return;
+    if (!this.saveLog && notErrorLog && !forceSaveLog) return;
 
     this.logHistoryId += 1;
     detail.id = this.logHistoryId;
@@ -378,7 +416,7 @@ class WorkflowEngine {
       detail.name !== 'delay' ||
       detail.replacedValue ||
       detail.name === 'javascript-code' ||
-      (blocks[detail.name]?.refDataKeys && this.saveLog)
+      (blocks[detail.name]?.refDataKeys && (this.saveLog || forceSaveLog))
     ) {
       const { variables, loopData } = this.refDataSnapshotsKeys;
 
@@ -394,9 +432,17 @@ class WorkflowEngine {
       };
 
       delete detail.replacedValue;
+      delete detail.ctxData;
     }
 
+    delete detail.syncRunningState;
     this.history.push(detail);
+
+    if (syncRunningState && !this.isDestroyed && this.states) {
+      this.updateState({}).catch((error) => {
+        console.warn('Failed to sync workflow log state', error);
+      });
+    }
   }
 
   async stop() {
@@ -472,6 +518,8 @@ class WorkflowEngine {
       this.columnsId = null;
       this.historyCtxData = null;
       this.preloadScripts = null;
+      this.taxVatAdaptiveNotices = null;
+      this.taxVatAdaptiveNoticeTarget = null;
     };
 
     try {
@@ -490,43 +538,12 @@ class WorkflowEngine {
       }
 
       const endedTimestamp = Date.now();
+      await this.showTaxVatAdaptiveNotices(status);
       this.workers.clear();
       this.executeQueue();
 
       this.states.off('stop', this.onWorkflowStopped);
       await this.states.delete(this.id);
-
-      if (!this.workflow.settings?.debugMode) {
-        const { user } = (await BrowserAPIService.storage.local.get(
-          'user'
-        )) || { user: null };
-
-        const logDto = {
-          workflowId: this.workflow.id,
-          workflowName: this.workflow.name,
-          nodesCount: this.workflow.drawflow.nodes.length,
-          status,
-          message: message || '',
-          startedAt: new Date(this.startedTimestamp).toISOString(),
-          endedAt: new Date(endedTimestamp).toISOString(),
-          userId: user?.id,
-        };
-
-        try {
-          const response = await fetchApi('/workflows/logs/report', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(logDto),
-            auth: true,
-          });
-
-          if (!response.ok) {
-            throw new Error(`API request failed: ${response.status}`);
-          }
-        } catch (err) {
-          console.error('Failed to report workflow execution:', err);
-        }
-      }
 
       this.dispatchEvent('destroyed', {
         status,
@@ -581,8 +598,24 @@ class WorkflowEngine {
         }
       );
 
-      if (!this.workflow?.isTesting) {
-        const { name, id, teamId } = this.workflow;
+      if (this.workflow) {
+        // Persist workflow logs to dbLogs even when running with unsaved
+        // changes (`isTesting: true`). The original Automa behaviour was to
+        // skip log persistence for testing runs to avoid polluting history,
+        // but for tax-vat adaptive matching the user explicitly needs to
+        // inspect `forms-adaptive-match` entries (candidate scores, hit
+        // reasons, threshold check) to tune CSS selectors and confidence
+        // thresholds — and those iterations almost always happen with
+        // unsaved edits. We still tag the entry with `triggerType: 'testing'`
+        // so the user can tell preview runs apart from real runs in the
+        // logs panel.
+        const { name, id, teamId, isTesting } = this.workflow;
+
+        const persistedHistory = this.saveLog
+          ? this.history
+          : this.history.filter(
+              (item) => item.type === 'error' || item.forceSaveLog === true
+            );
 
         await this.logger.add({
           detail: {
@@ -593,13 +626,19 @@ class WorkflowEngine {
             id: this.id,
             workflowId: id,
             saveLog: this.saveLog,
+            duration: endedTimestamp - this.startedTimestamp,
             endedAt: endedTimestamp,
+            errorDetails: status === 'error' ? blockDetail || null : null,
+            errorMessage: status === 'error' ? message || '' : '',
             parentLog: this.parentWorkflow,
             startedAt: this.startedTimestamp,
+            triggerType: isTesting
+              ? 'testing'
+              : this.workflow.trigger?.type || 'manual',
           },
           history: {
             logId: this.id,
-            data: this.saveLog ? this.history : [],
+            data: persistedHistory,
           },
           ctxData: {
             logId: this.id,

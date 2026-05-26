@@ -15,7 +15,7 @@
         <label
           class="bg-input flex h-12 items-center rounded-lg px-2 ring-accent transition focus-within:ring-2"
         >
-          <img :src="logoUrl" class="h-8 w-8" />
+          <img :src="logoUrl" class="h-8 w-auto object-contain" />
           <input
             ref="inputRef"
             type="text"

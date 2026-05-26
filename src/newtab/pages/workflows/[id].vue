@@ -1,5 +1,11 @@
 <template>
-  <div v-if="workflow" class="flex" style="height: calc(100vh - 40px)">
+  <div
+    v-if="workflow"
+    class="flex"
+    :style="{
+      height: isCompactEditor ? '100vh' : 'calc(100vh - 40px)',
+    }"
+  >
     <div
       v-if="state.showSidebar && haveEditAccess"
       :class="
@@ -64,6 +70,7 @@
           </div>
         </ui-card>
         <ui-tabs
+          v-if="!isCompactEditor || isPackage"
           :model-value="isPackage ? state.activeTab : 'editor'"
           class="pointer-events-auto h-full space-x-1 rounded-lg border-none bg-white px-2 dark:bg-gray-800"
           @change="onTabChange"
@@ -100,6 +107,27 @@
             </span>
           </ui-tab>
         </ui-tabs>
+        <div
+          v-else
+          class="pointer-events-auto flex h-11 items-center space-x-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm dark:border-gray-600 dark:bg-gray-800"
+        >
+          <button
+            v-if="haveEditAccess"
+            v-tooltip="
+              `${t('workflow.toggleSidebar')} (${
+                shortcut['editor:toggle-sidebar'].readable
+              })`
+            "
+            @click="toggleSidebar"
+          >
+            <v-remixicon
+              :name="state.showSidebar ? 'riSideBarFill' : 'riSideBarLine'"
+            />
+          </button>
+          <span class="text-sm font-semibold text-slate-800 dark:text-gray-100">
+            {{ t('common.flowCanvas') }}
+          </span>
+        </div>
         <ui-card v-if="isTeamWorkflow" padding="p-1 ml-4 pointer-events-auto">
           <ui-input
             v-tooltip="'Workflow URL'"
@@ -175,7 +203,9 @@
             :disabled="isTeamWorkflow && !haveEditAccess"
             :class="{ 'animate-blocks': state.animateBlocks }"
             class="workflow-editor focus:outline-none"
-            style="height: calc(100vh - 40px)"
+            :style="{
+              height: isCompactEditor ? '100vh' : 'calc(100vh - 40px)',
+            }"
             tabindex="0"
             @init="onEditorInit"
             @edit="initEditBlock"
@@ -382,6 +412,9 @@ const teamWorkflowStore = useTeamWorkflowStore();
 const { teamId, id: workflowId } = route.params;
 const isTeamWorkflow = route.name === 'team-workflows';
 const isPackage = route.name === 'packages-details';
+const isCompactEditor = computed(
+  () => route.query.compact === '1' && !isPackage
+);
 const funcsAutocomplete = Object.keys(functions).reduce((acc, name) => {
   acc[`$${name}`] = '';
 
@@ -426,7 +459,10 @@ const state = reactive({
   animateBlocks: false,
   isExecuteCommand: false,
   workflowConverted: false,
-  activeTab: route.query.tab || 'editor',
+  activeTab:
+    route.query.compact === '1' && route.name !== 'packages-details'
+      ? 'editor'
+      : route.query.tab || 'editor',
 });
 const blockFolderModal = reactive({
   name: '',
@@ -1608,9 +1644,23 @@ provide('workflow-utils', {
 });
 
 watch(
+  () => route.query.compact,
+  (compact) => {
+    if (compact === '1' && !isPackage) state.activeTab = 'editor';
+  },
+  { immediate: true }
+);
+
+watch(
   () => state.activeTab,
   (value) => {
-    router.replace({ ...route, query: { tab: value } });
+    if (isCompactEditor.value) return;
+
+    router.replace({
+      name: route.name,
+      params: route.params,
+      query: { ...route.query, tab: value },
+    });
   }
 );
 watch(
@@ -1657,6 +1707,8 @@ onMounted(() => {
   if (workflow.value.connectedTable) {
     fetchConnectedTable();
   }
+
+  localStorage.setItem('lastWorkflowEditorId', route.params.id);
 
   initAutocomplete();
 });

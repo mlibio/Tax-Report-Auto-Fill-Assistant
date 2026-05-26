@@ -1,6 +1,4 @@
-import dayjs from '@/lib/dayjs';
 import BrowserAPIService from '@/service/browser-api/BrowserAPIService';
-import { fetchApi } from '@/utils/api';
 import convertWorkflowData from '@/utils/convertWorkflowData';
 import getBlockMessage from '@/utils/getBlockMessage';
 import blocksHandler from './blocksHandler';
@@ -118,30 +116,6 @@ class WorkflowManager {
         });
       }
     });
-
-    BrowserAPIService.storage.local
-      .get('checkStatus')
-      .then((res) => {
-        const { checkStatus } = res || { checkStatus: null };
-        const isSameDay = checkStatus
-          ? dayjs().isSame(checkStatus, 'day')
-          : false;
-        if (!isSameDay || !checkStatus) {
-          fetchApi('/status')
-            .then((response) => response.json())
-            .then(() => {
-              BrowserAPIService.storage.local.set({
-                checkStatus: new Date().toString(),
-              });
-            })
-            .catch((error) => {
-              console.error('Failed to check status:', error);
-            });
-        }
-      })
-      .catch((error) => {
-        console.error('Failed to get checkStatus:', error);
-      });
 
     return engine;
   }

@@ -634,6 +634,12 @@
         },
         "checkbox": {
           "name": "Checkbox"
+        },
+        "adaptive": {
+          "title": "Tax page adaptive match",
+          "enable": "Enable tax page adaptation when CSS match fails",
+          "threshold": "Minimum confidence",
+          "hint": "Runs only after the original selector fails, matches empty controls only, and logs the matching evidence."
         }
       },
       "repeat-task": {

@@ -77,6 +77,18 @@
               class="log-link text-overflow"
               @click="$emit('select', { type: 'log', id: log.id })"
             >
+              <span
+                v-if="log.triggerType === 'testing'"
+                class="mr-1 inline-block rounded bg-amber-200 px-1 align-middle text-xs text-amber-900 dark:bg-amber-300 dark:text-amber-900"
+                :title="
+                  getTranslation(
+                    'log.testingHint',
+                    '工作流在含未保存改动的状态下运行（测试运行），与正式运行的日志互不干扰。'
+                  )
+                "
+              >
+                {{ getTranslation('log.testingBadge', '测试') }}
+              </span>
               {{ log.name }}
             </p>
             <router-link
@@ -84,6 +96,18 @@
               :to="`/logs/${log.id}`"
               class="log-link text-overflow"
             >
+              <span
+                v-if="log.triggerType === 'testing'"
+                class="mr-1 inline-block rounded bg-amber-200 px-1 align-middle text-xs text-amber-900 dark:bg-amber-300 dark:text-amber-900"
+                :title="
+                  getTranslation(
+                    'log.testingHint',
+                    '工作流在含未保存改动的状态下运行（测试运行），与正式运行的日志互不干扰。'
+                  )
+                "
+              >
+                {{ getTranslation('log.testingBadge', '测试') }}
+              </span>
               {{ log.name }}
             </router-link>
           </td>
@@ -177,7 +201,10 @@ function formatDate(date, format) {
 
   return dayjs(date).format(format);
 }
-function getErrorMessage({ message }) {
+function getErrorMessage({ message, errorMessage }) {
+  if (errorMessage) return errorMessage;
+  if (!message || !/^[\w.-]+$/.test(message)) return message || '';
+
   const messagePath = `log.messages.${message}`;
 
   if (message && te(messagePath)) {

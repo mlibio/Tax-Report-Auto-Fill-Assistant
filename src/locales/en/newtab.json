@@ -459,13 +459,18 @@
     "selectAll": "Select all",
     "deselectAll": "Deselect all",
     "deleteSelected": "Delete selected logs",
+    "testingBadge": "Test",
+    "testingHint": "Workflow ran with unsaved edits (testing run). Open the log to see the adaptive matcher's calculation result.",
     "clearLogs": {
       "title": "Clear logs",
       "description": "Are you sure you want to clear all logs?"
     },
     "types": {
       "stop": "Workflow is stopped",
-      "finish": "Finish"
+      "finish": "Finish",
+      "forms-adaptive-match": "Tax page adaptive match",
+      "forms-adaptive-debug": "Tax page adaptive debug",
+      "forms-unresolved-ref": "Forms variable resolution"
     },
     "messages": {
       "url-empty": "URL is empty",

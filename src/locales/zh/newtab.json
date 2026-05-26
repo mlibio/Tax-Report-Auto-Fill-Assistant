@@ -4,8 +4,8 @@
     "communities": "社区"
   },
   "welcome": {
-    "title": "欢迎使用 Automa! 🎉",
-    "text": "从阅读文档或浏览 Automa 市场中的工作流开始.",
+    "title": "欢迎使用税务自动填报助手",
+    "text": "从工作流管理、报表数据管理和元素选择器开始配置本地自动填报流程。",
     "marketplace": "市场"
   },
   "packages": {
@@ -82,7 +82,7 @@
     }
   },
   "updateMessage": {
-    "text1": "Automa 已更新为 v{version},",
+    "text1": "税务自动填报助手已更新为 v{version},",
     "text2": "看看有什么新东西."
   },
   "workflows": {
@@ -352,7 +352,7 @@
       "notification": {
         "title": "工作流通知",
         "description": "执行后显示工作流状态（成功或失败）",
-        "noPermission": "Automa 需要 \"notifications\" 权限才能正常工作"
+        "noPermission": "税务自动填报助手需要 \"notifications\" 权限才能正常工作"
       },
       "publicId": {
         "title": "工作流公开 Id",
@@ -369,7 +369,7 @@
       },
       "autocomplete": {
         "title": "自动完成",
-        "description": "在输入块中启用自动完成（如果造成 Automa 不稳定请禁用）"
+        "description": "在输入块中启用自动完成（如果造成插件不稳定请禁用）"
       },
       "clearCache": {
         "title": "清理缓存",
@@ -439,13 +439,18 @@
     "selectAll": "选择全部",
     "deselectAll": "取消全选",
     "deleteSelected": "删除已选日志",
+    "testingBadge": "测试",
+    "testingHint": "工作流在含未保存改动的状态下运行（测试运行），点击查看日志可看到适配计算结果。",
     "clearLogs": {
       "title": "清除日志",
       "description": "您确定清除所有日志吗？"
     },
     "types": {
       "stop": "工作流已停止",
-      "finish": "完成"
+      "finish": "完成",
+      "forms-adaptive-match": "税务页面适配",
+      "forms-adaptive-debug": "税务页面适配调试",
+      "forms-unresolved-ref": "表单变量解析"
     },
     "messages": {
       "url-empty": "URL 为空",
@@ -462,7 +467,7 @@
       "active-tab-removed": "工作流活动标签页已删除",
       "empty-spreadsheet-range": "电子表格范围为空",
       "stop-timeout": "工作流程因超时而停止",
-      "no-file-access": "Automa 无权访问该文件",
+      "no-file-access": "税务自动填报助手无权访问该文件",
       "no-workflow": "找不到含 \"{workflowId}\" ID 的工作流",
       "no-match-tab": "找不到含 \"{pattern}\" 参数的标签页",
       "no-clipboard-acces": "无权访问剪贴板",

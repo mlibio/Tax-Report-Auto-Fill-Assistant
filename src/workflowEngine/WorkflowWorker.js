@@ -290,14 +290,20 @@ class WorkflowWorker {
       activeTabUrl: this.activeTab.url,
     };
 
+    const refKeys =
+      isRetry || block.data.disableBlock
+        ? null
+        : this.blocksDetail[block.label].refDataKeys;
+    const blockRefKeys =
+      block.label === 'forms' && Array.isArray(refKeys)
+        ? refKeys.filter((key) => key !== 'value')
+        : refKeys;
+
     const replacedBlock = await templating({
       block,
       data: refData,
       isPopup: this.engine.isPopup,
-      refKeys:
-        isRetry || block.data.disableBlock
-          ? null
-          : this.blocksDetail[block.label].refDataKeys,
+      refKeys: blockRefKeys,
     });
 
     const blockDelay = this.settings?.blockDelay || 0;

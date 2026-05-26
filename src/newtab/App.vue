@@ -1,66 +1,15 @@
 <template>
   <template v-if="retrieved">
-    <app-sidebar v-if="$route.name !== 'recording'" />
-    <main :class="{ 'pl-16': $route.name !== 'recording' }">
+    <app-sidebar v-if="$route.name !== 'recording' && !hideChromeNav" />
+    <main
+      :class="{
+        'pt-14': $route.name !== 'recording' && !hideChromeNav,
+      }"
+    >
       <router-view />
     </main>
     <app-logs />
-    <ui-dialog>
-      <template #auth>
-        <div class="text-center">
-          <p class="text-xl font-semibold">Oops!! 😬</p>
-          <p class="mt-2 text-gray-600 dark:text-gray-200">
-            {{ t('auth.text') }}
-          </p>
-          <ui-button
-            tag="a"
-            href="https://extension.automa.site/auth"
-            class="mt-6 block w-full"
-            variant="accent"
-          >
-            {{ t('auth.signIn') }}
-          </ui-button>
-        </div>
-      </template>
-    </ui-dialog>
-    <div
-      v-if="isUpdated"
-      class="fixed bottom-8 left-1/2 z-50 max-w-xl -translate-x-1/2 text-white dark:text-gray-900"
-    >
-      <div class="flex items-center rounded-lg bg-accent p-4 shadow-2xl">
-        <v-remixicon name="riInformationLine" class="mr-3" />
-        <p>
-          {{ t('updateMessage.text1', { version: currentVersion }) }}
-        </p>
-        <a
-          :href="`https://github.com/AutomaApp/automa/releases/latest`"
-          target="_blank"
-          rel="noopener"
-          class="ml-1 underline"
-        >
-          {{ t('updateMessage.text2') }}
-        </a>
-        <div class="flex-1" />
-        <button
-          class="ml-6 text-gray-200 dark:text-gray-600"
-          @click="isUpdated = false"
-        >
-          <v-remixicon size="20" name="riCloseLine" />
-        </button>
-      </div>
-      <!-- <div class="mt-4 flex items-center rounded-lg bg-accent p-4 shadow-2xl">
-        <v-remixicon name="riInformationLine" class="mr-3 shrink-0" />
-        <p>
-          Export your Automa workflows as a standalone extension using
-          <a
-            href="https://docs.extension.automa.site/extension-builder/"
-            target="_blank"
-            class="underline"
-            >Automa Chrome Extension Builder</a
-          >
-        </p>
-      </div> -->
-    </div>
+    <ui-dialog />
     <shared-permissions-modal
       v-model="permissionState.showModal"
       :permissions="permissionState.items"
@@ -71,8 +20,7 @@
   </div>
 </template>
 <script setup>
-import iconChrome from '@/assets/svg/logo.svg';
-import iconFirefox from '@/assets/svg/logoFirefox.svg';
+import iconLogo from '@/assets/images/logo.png';
 import AppLogs from '@/components/newtab/app/AppLogs.vue';
 import AppSidebar from '@/components/newtab/app/AppSidebar.vue';
 import SharedPermissionsModal from '@/components/newtab/shared/SharedPermissionsModal.vue';
@@ -81,86 +29,47 @@ import dbLogs from '@/db/logs';
 import dayjs from '@/lib/dayjs';
 import emitter from '@/lib/mitt';
 import { loadLocaleMessages, setI18nLanguage } from '@/lib/vueI18n';
+import { seedBuiltinTaxWorkflows } from '@/business/tax/seed';
 import { useFolderStore } from '@/stores/folder';
-import { useHostedWorkflowStore } from '@/stores/hostedWorkflow';
 import { useStore } from '@/stores/main';
-import { usePackageStore } from '@/stores/package';
-import { useSharedWorkflowStore } from '@/stores/sharedWorkflow';
-import { useTeamWorkflowStore } from '@/stores/teamWorkflow';
-import { useUserStore } from '@/stores/user';
 import { useWorkflowStore } from '@/stores/workflow';
-import { getUserWorkflows } from '@/utils/api';
 import dataMigration from '@/utils/dataMigration';
 import { MessageListener } from '@/utils/message';
 import { getWorkflowPermissions } from '@/utils/workflowData';
 import automa from '@business';
 import { useHead } from '@vueuse/head';
-import { compare } from 'compare-versions';
-import { reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import browser from 'webextension-polyfill';
 
 const iconElement = document.createElement('link');
 iconElement.rel = 'icon';
-iconElement.href =
-  window.location.protocol === 'moz-extension' ? iconFirefox : iconChrome;
+iconElement.href = iconLogo;
 document.head.appendChild(iconElement);
 
 window.fromBackground = window.location.href.includes('?fromBackground=true');
 
 const { t } = useI18n();
 const route = useRoute();
+const hideChromeNav = computed(
+  () => route.name === 'workflows-details' && route.query.compact === '1'
+);
 const store = useStore();
 const theme = useTheme();
 const router = useRouter();
-const userStore = useUserStore();
 const folderStore = useFolderStore();
-const packageStore = usePackageStore();
 const workflowStore = useWorkflowStore();
-const teamWorkflowStore = useTeamWorkflowStore();
-const sharedWorkflowStore = useSharedWorkflowStore();
-const hostedWorkflowStore = useHostedWorkflowStore();
 
 theme.init();
 
 const retrieved = ref(false);
-const isUpdated = ref(false);
 const permissionState = reactive({
   permissions: [],
   showModal: false,
 });
 
 const currentVersion = browser.runtime.getManifest().version;
-const prevVersion = localStorage.getItem('ext-version') || '0.0.0';
-
-async function fetchUserData() {
-  try {
-    if (!userStore.user) return;
-
-    const { backup, hosted } = await getUserWorkflows();
-    userStore.hostedWorkflows = hosted || {};
-
-    if (backup && backup.length > 0) {
-      const { lastBackup } = browser.storage.local.get('lastBackup');
-      if (!lastBackup) {
-        const backupIds = backup.map(({ id }) => id);
-
-        userStore.backupIds = backupIds;
-        await browser.storage.local.set({
-          backupIds,
-          lastBackup: new Date().toISOString(),
-        });
-      }
-
-      await workflowStore.insertOrUpdate(backup, { checkUpdateDate: true });
-    }
-
-    userStore.retrieved = true;
-  } catch (error) {
-    console.error(error);
-  }
-}
 /* eslint-disable-next-line */
 function autoDeleteLogs() {
   const deleteAfter = store.settings.deleteLogAfter;
@@ -190,22 +99,6 @@ function autoDeleteLogs() {
       localStorage.setItem('checkDeleteLogs', Date.now());
     });
 }
-async function syncHostedWorkflows() {
-  const hostIds = [];
-  const userHosted = userStore.getHostedWorkflows;
-  const hostedWorkflows = hostedWorkflowStore.workflows;
-
-  Object.keys(hostedWorkflows).forEach((hostId) => {
-    const isItsOwn = userHosted.find((item) => item.hostId === hostId);
-    if (isItsOwn) return;
-
-    hostIds.push({ hostId, updatedAt: hostedWorkflows[hostId].updatedAt });
-  });
-
-  if (hostIds.length === 0) return;
-
-  await hostedWorkflowStore.fetchWorkflows(hostIds);
-}
 function stopRecording() {
   if (!window.stopRecording) return;
 
@@ -214,7 +107,7 @@ function stopRecording() {
 
 const messageEvents = {
   'refresh-packages': function () {
-    packageStore.loadData(true);
+    // Package sharing is disabled in the local-only build.
   },
   'open-logs': function (data) {
     emitter.emit('ui:logs', {
@@ -224,11 +117,7 @@ const messageEvents = {
   },
   'workflow:added': function (data) {
     if (data.source === 'team') {
-      teamWorkflowStore.loadData().then(() => {
-        router.push(
-          `/teams/${data.teamId}/workflows/${data.workflowId}?permission=true`
-        );
-      });
+      router.push('/workflows');
     } else if (data.workflowData) {
       workflowStore
         .insert(data.workflowData, { duplicateId: true })
@@ -268,11 +157,11 @@ useHead(() => {
   const runningWorkflows = workflowStore.popupStates.length;
 
   return {
-    title: 'Dashboard',
+    title: '工作台',
     titleTemplate:
       runningWorkflows > 0
-        ? `%s (${runningWorkflows} Workflows Running) - Automa`
-        : '%s - Automa',
+        ? `%s（${runningWorkflows} 个运行中）- 税务自动填报助手`
+        : '%s - 税务自动填报助手',
   };
 });
 
@@ -347,33 +236,27 @@ watch(
       return;
     }
 
-    const { isFirstTime } = await browser.storage.local.get('isFirstTime');
-    isUpdated.value = !isFirstTime && compare(currentVersion, prevVersion, '>');
-
     await Promise.allSettled([
       folderStore.load(),
       store.loadSettings(),
       workflowStore.loadData(),
-      teamWorkflowStore.loadData(),
-      hostedWorkflowStore.loadData(),
-      packageStore.loadData(),
+    ]);
+    await seedBuiltinTaxWorkflows(workflowStore);
+    await browser.storage.local.remove([
+      'session',
+      'sessionToken',
+      'user',
+      'backupIds',
+      'lastBackup',
     ]);
 
     await loadLocaleMessages(store.settings.locale, 'newtab');
     await setI18nLanguage(store.settings.locale);
 
     await dataMigration();
-    await userStore.loadUser({ useCache: false, ttl: 2 });
-
     await automa('app');
 
     retrieved.value = true;
-
-    await Promise.allSettled([
-      sharedWorkflowStore.fetchWorkflows(),
-      fetchUserData(),
-      syncHostedWorkflows(),
-    ]);
 
     const { isRecording } = await browser.storage.local.get('isRecording');
     if (isRecording) {

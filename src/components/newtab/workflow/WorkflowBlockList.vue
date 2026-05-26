@@ -1,35 +1,33 @@
 <template>
   <ui-expand
     hide-header-icon
-    header-class="flex items-center py-2 focus:ring-0 w-full text-left text-gray-600 dark:text-gray-200"
+    header-class="workflow-block-category flex items-center rounded-xl px-3 py-2 focus:ring-0 w-full text-left text-slate-700 dark:text-gray-200"
   >
     <template #header="{ show }">
-      <span :class="category.color" class="h-3 w-3 rounded-full"></span>
-      <p class="ml-2 flex-1 capitalize">
+      <span
+        :class="category.color"
+        class="h-3 w-3 rounded-full ring-4 ring-white dark:ring-gray-900"
+      ></span>
+      <p class="ml-3 flex-1 text-sm font-semibold capitalize">
         {{ category.name }}
       </p>
       <v-remixicon :name="show ? 'riSubtractLine' : 'riAddLine'" size="20" />
     </template>
-    <div class="mb-4 grid grid-cols-2 gap-2">
+    <div class="mb-4 grid grid-cols-1 gap-2 px-1 xl:grid-cols-2">
       <div
         v-for="block in blocks"
         :key="block.id"
         :title="getBlockTitle(block)"
         draggable="true"
-        class="bg-input group relative cursor-move select-none rounded-lg p-4 transition"
+        class="workflow-block-item group relative cursor-move select-none rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-900"
         @dragstart="$event.dataTransfer.setData('block', JSON.stringify(block))"
       >
         <div
-          class="invisible absolute right-2 top-2 flex items-center text-gray-600 group-hover:visible dark:text-gray-300"
+          class="invisible absolute right-2 top-2 flex items-center text-slate-500 group-hover:visible dark:text-gray-300"
         >
-          <a
-            :href="`https://docs.extension.automa.site/blocks/${block.id}.html`"
-            :title="t('common.docs')"
-            target="_blank"
-            rel="noopener"
-          >
+          <span :title="getBlockTitle(block)">
             <v-remixicon name="riInformationLine" size="18" />
-          </a>
+          </span>
           <span
             :title="`${pinned.includes(block.id) ? 'Unpin' : 'Pin'} block`"
             class="ml-1 cursor-pointer"
@@ -54,10 +52,12 @@
           v-else
           :path="getIconPath(block.icon)"
           :name="block.icon"
-          size="24"
-          class="mb-2"
+          size="22"
+          class="mb-2 text-blue-600"
         />
-        <p class="text-overflow capitalize leading-tight">
+        <p
+          class="text-overflow text-sm font-medium capitalize leading-tight text-slate-800 dark:text-gray-100"
+        >
           {{ block.name }}
         </p>
         <div

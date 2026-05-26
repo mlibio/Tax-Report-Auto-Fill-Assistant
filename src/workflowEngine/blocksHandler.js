@@ -10,9 +10,27 @@ const handlers = blocksHandler.keys().reduce((acc, key) => {
   return acc;
 }, {});
 
+const offlineUnsupportedBlocks = [
+  'aiWorkflow',
+  'googleDrive',
+  'googleSheets',
+  'googleSheetsDrive',
+  'webhook',
+];
+
+function offlineUnsupportedBlock() {
+  throw new Error('This workflow block is disabled in local-only mode');
+}
+
 export default function () {
-  return {
+  const localHandlers = {
     ...handlers,
     ...customHandlers(),
   };
+
+  offlineUnsupportedBlocks.forEach((blockName) => {
+    localHandlers[blockName] = offlineUnsupportedBlock;
+  });
+
+  return localHandlers;
 }

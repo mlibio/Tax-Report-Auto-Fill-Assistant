@@ -28,5 +28,43 @@
         "local": "本地"
       }
     }
+  },
+  "popup": {
+    "dataPrep": "数据准备",
+    "execute": "执行",
+    "importReport": "导入报表数据",
+    "workflowManage": "工作流管理",
+    "dataManage": "数据管理",
+    "elementSelector": "元素选择器",
+    "savedReportVars": "已保存的报表数据",
+    "executeWorkflow": "执行",
+    "selectReportVar": "报表文件",
+    "selectWorkflow": "工作流",
+    "noWorkflows": "暂无工作流，请先导入或新建。",
+    "needWorkflow": "请选择工作流。",
+    "needReport": "请选择报表文件。",
+    "settings": "插件设置",
+    "reportName": "报表名称",
+    "reportFilePath": "报表文件路径",
+    "reportModalTitle": "导入报表数据",
+    "reportSave": "保存",
+    "duplicateReportName": "报表名称已存在",
+    "invalidReportFileType": "报表文件限制.xls与.xlsx文件",
+    "removeVar": "移除",
+    "taxFilePathHint": "未选择报表将直接执行工作流。",
+    "logs": {
+      "title": "运行日志",
+      "empty": "暂无日志记录",
+      "exportJson": "导出JSON",
+      "exportCsv": "导出CSV"
+    },
+    "importWorkflowDone": "工作流已导入"
+  },
+  "log": {
+    "delete": {
+      "title": "删除日志",
+      "description": "确定要删除所选日志吗？"
+    },
+    "deleteSelected": "删除所选"
   }
 }

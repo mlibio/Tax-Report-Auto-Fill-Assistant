@@ -1,6 +1,7 @@
 {
   "manifest_version": 2,
-  "name": "Automa",
+  "name": "税务自动填报助手",
+  "description": "在浏览器中本地运行税务报表自动填报工作流，无需联网。",
   "browser_specific_settings": {
     "gecko": {
       "strict_min_version": "91.1.0"
@@ -23,14 +24,14 @@
         "default": "Alt+A",
         "mac": "Alt+A"
       },
-      "description": "Open the dashboard"
+      "description": "打开本地工作流工作台"
     },
     "element-picker": {
       "suggested_key": {
         "default": "Alt+P",
         "mac": "Alt+P"
       },
-      "description": "Open element picker"
+      "description": "打开元素选择器"
     }
   },
   "content_scripts": [
@@ -39,12 +40,6 @@
       "js": ["contentScript.bundle.js"],
       "run_at": "document_start",
       "all_frames": true
-    },
-    {
-      "matches": ["*://*.automa.site/*", "*://automa.vercel.app/*"],
-      "js": ["webService.bundle.js"],
-      "run_at": "document_start",
-      "all_frames": false
     }
   ],
   "optional_permissions": ["clipboardRead", "clipboardWrite", "downloads", "notifications", "cookies"],

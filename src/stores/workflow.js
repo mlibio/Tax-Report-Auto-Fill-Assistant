@@ -1,4 +1,3 @@
-import { fetchApi } from '@/utils/api';
 import firstWorkflows from '@/utils/firstWorkflows';
 import { tasks } from '@/utils/shared';
 import {
@@ -11,7 +10,6 @@ import deepmerge from 'lodash.merge';
 import { nanoid } from 'nanoid';
 import { defineStore } from 'pinia';
 import browser from 'webextension-polyfill';
-import { useUserStore } from './user';
 
 const defaultWorkflow = (data = null, options = {}) => {
   let workflowData = {
@@ -254,28 +252,6 @@ export const useWorkflowStore = defineStore('workflow', {
       }
 
       await cleanWorkflowTriggers(id);
-
-      const userStore = useUserStore();
-
-      const hostedWorkflow = userStore.hostedWorkflows[id];
-      const backupIndex = userStore.backupIds.indexOf(id);
-
-      if (hostedWorkflow || backupIndex !== -1) {
-        const response = await fetchApi(`/me/workflows?id=${id}`, {
-          auth: true,
-          method: 'DELETE',
-        });
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.message);
-        }
-
-        if (backupIndex !== -1) {
-          userStore.backupIds.splice(backupIndex, 1);
-          await browser.storage.local.set({ backupIds: userStore.backupIds });
-        }
-      }
 
       await browser.storage.local.remove([
         `state:${id}`,

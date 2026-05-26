@@ -20,13 +20,23 @@ function translateLog(log) {
       ? vueI18n.global.t(params.path, params.params)
       : def;
   };
+  const translateMessage = (message) => {
+    if (!message || !/^[\w.-]+$/.test(message)) return message;
+
+    return getTranslatation(
+      { path: `log.messages.${message}`, params: log },
+      message
+    );
+  };
 
   if (['finish', 'stop'].includes(log.type)) {
     copyLog.name = vueI18n.global.t(`log.types.${log.type}`);
   } else {
+    const blockDetail = blocks[log.name];
+    const diagnosticName = getTranslatation(`log.types.${log.name}`, log.name);
     copyLog.name = getTranslatation(
       `workflow.blocks.${log.name}.name`,
-      blocks[log.name].name
+      blockDetail?.name || diagnosticName
     );
   }
 
@@ -34,10 +44,7 @@ function translateLog(log) {
     copyLog.messageId = `${copyLog.message}`;
   }
 
-  copyLog.message = getTranslatation(
-    { path: `log.messages.${log.message}`, params: log },
-    log.message
-  );
+  copyLog.message = translateMessage(log.message);
 
   return copyLog;
 }

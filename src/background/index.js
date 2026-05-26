@@ -6,7 +6,7 @@ import {
   executeCallbacksInData,
   isCallbackBridge,
 } from '@/utils/callbackBridge';
-import getFile, { readFileAsBase64 } from '@/utils/getFile';
+import getFile from '@/utils/getFile';
 import { sleep } from '@/utils/helper';
 import { MessageListener } from '@/utils/message';
 
@@ -70,25 +70,11 @@ message.on(BrowserAPIEventHandler.RuntimeEvents.TOGGLE, (data) =>
   BrowserAPIEventHandler.instance.onToggleBrowserEventListener(data)
 );
 
-message.on('fetch', async ({ type, resource }) => {
-  const response = await fetch(resource.url, resource);
-  if (!response.ok) throw new Error(response.statusText);
-
-  let result = null;
-
-  if (type === 'base64') {
-    const blob = await response.blob();
-    const base64 = await readFileAsBase64(blob);
-
-    result = base64;
-  } else {
-    result = await response[type]();
-  }
-
-  return result;
+message.on('fetch', async () => {
+  throw new Error('Background fetch is disabled in local-only mode');
 });
-message.on('fetch:text', (url) => {
-  return fetch(url).then((response) => response.text());
+message.on('fetch:text', () => {
+  throw new Error('Background text fetch is disabled in local-only mode');
 });
 
 message.on('open:dashboard', (url) => BackgroundUtils.openDashboard(url));
@@ -149,7 +135,7 @@ message.on('workflow:stop', (stateId) =>
   BackgroundWorkflowUtils.instance.stopExecution(stateId)
 );
 message.on('workflow:execute', async (workflowData, sender) => {
-  if (workflowData.includeTabId) {
+  if (workflowData.includeTabId && sender.tab?.id) {
     if (!workflowData.options) workflowData.options = {};
     workflowData.options.tabId = sender.tab.id;
   }

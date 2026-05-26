@@ -95,6 +95,42 @@
         min="0"
         @change="updateData({ delay: $event })"
       />
+      <ui-expand
+        v-if="data.type === 'text-field' || data.type === 'select'"
+        hide-header-icon
+        header-class="flex items-center w-full focus:ring-0 mt-3"
+      >
+        <template #header="{ show }">
+          <v-remixicon
+            name="riArrowLeftSLine"
+            :rotate="show ? 270 : 180"
+            class="mr-1 -ml-1 transition-transform"
+          />
+          {{ t('workflow.blocks.forms.adaptive.title') }}
+        </template>
+        <div class="mt-2 space-y-2">
+          <ui-checkbox
+            :model-value="data.enableAdaptiveMatch"
+            @change="toggleAdaptiveMatch"
+          >
+            {{ t('workflow.blocks.forms.adaptive.enable') }}
+          </ui-checkbox>
+          <ui-input
+            v-if="data.enableAdaptiveMatch"
+            :model-value="data.adaptiveThreshold ?? 0.75"
+            :label="t('workflow.blocks.forms.adaptive.threshold')"
+            type="number"
+            min="0"
+            max="1"
+            step="0.05"
+            class="w-full"
+            @change="updateData({ adaptiveThreshold: +$event })"
+          />
+          <p class="text-xs text-slate-500 dark:text-gray-400">
+            {{ t('workflow.blocks.forms.adaptive.hint') }}
+          </p>
+        </div>
+      </ui-expand>
     </template>
   </edit-interaction-base>
 </template>
@@ -122,5 +158,15 @@ const forms = ['text-field', 'select', 'checkbox', 'radio'];
 
 function updateData(value) {
   emit('update:data', { ...props.data, ...value });
+}
+
+function toggleAdaptiveMatch(enabled) {
+  updateData({
+    enableAdaptiveMatch: enabled,
+    adaptiveDomain: props.data.adaptiveDomain || 'tax-vat',
+    adaptiveThreshold: props.data.adaptiveThreshold ?? 0.75,
+    adaptiveOnlyEmptyControls: props.data.adaptiveOnlyEmptyControls ?? true,
+    adaptiveLogDetail: props.data.adaptiveLogDetail ?? true,
+  });
 }
 </script>

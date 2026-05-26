@@ -31,9 +31,10 @@
       <logs-history
         :is-running="true"
         :current-log="{
-          history: running.state.logs,
+          history: running.state.logs || [],
           workflowId: running.workflowId,
         }"
+        :ctx-data="running.state.ctxData || {}"
       >
         <template #header-prepend>
           <div>

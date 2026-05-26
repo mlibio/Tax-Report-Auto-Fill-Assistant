@@ -12,9 +12,18 @@ class RendererWorkflowService {
       clonedWorkflowData[key] = toRaw(workflowData[key]);
     });
 
+    let plainOptions = options;
+    if (options && typeof options === 'object') {
+      try {
+        plainOptions = JSON.parse(JSON.stringify(toRaw(options)));
+      } catch {
+        plainOptions = options;
+      }
+    }
+
     return MessageListener.sendMessage(
       'workflow:execute',
-      { ...workflowData, options },
+      { ...clonedWorkflowData, options: plainOptions },
       'background'
     );
   }

@@ -5,7 +5,8 @@ import dayjs from './dayjs';
 
 const i18n = createI18n({
   legacy: false,
-  fallbackLocale: 'en',
+  locale: 'zh',
+  fallbackLocale: 'zh',
 });
 
 export function setI18nLanguage(locale) {
@@ -39,8 +40,8 @@ export async function loadLocaleMessages(locale, location) {
     }
   };
 
-  if (locale !== 'en' && !i18n.global.availableLocales.includes('en')) {
-    await loadLocaleMessages('en', location);
+  if (locale !== 'zh' && !i18n.global.availableLocales.includes('zh')) {
+    await loadLocaleMessages('zh', location);
   }
 
   dayjs.locale(locale);
@@ -49,6 +50,7 @@ export async function loadLocaleMessages(locale, location) {
   await importLocale('popup.json', true);
   await importLocale(`${location}.json`, true);
   await importLocale('blocks.json', true);
+  await importLocale('tax.json', true);
 
   return nextTick();
 }

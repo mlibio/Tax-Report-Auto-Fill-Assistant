@@ -117,6 +117,8 @@
           )
         }}
       </ui-button>
+      <ui-button @click="exportSelectedLogs('json')"> Export JSON </ui-button>
+      <ui-button @click="exportSelectedLogs('csv')"> Export CSV </ui-button>
       <ui-button variant="danger" @click="deleteSelectedLogs">
         {{ t('log.deleteSelected') }} ({{ selectedLogs.length }})
       </ui-button>
@@ -143,6 +145,7 @@ import { useLiveQuery } from '@/composable/liveQuery';
 import LogsFilters from '@/components/newtab/logs/LogsFilters.vue';
 import LogsDataViewer from '@/components/newtab/logs/LogsDataViewer.vue';
 import SharedLogsTable from '@/components/newtab/shared/SharedLogsTable.vue';
+import dataExporter from '@/utils/dataExporter';
 
 const props = defineProps({
   workflowId: {
@@ -216,15 +219,16 @@ const filteredLogs = computed(() => {
   if (!storedlogs.value) return [];
 
   return storedlogs.value
-    .filter(({ name, status, endedAt, workflowId }) => {
+    .filter(({ name, status, endedAt, workflowId, errorMessage = '' }) => {
       let dateFilter = true;
       let statusFilter = true;
       const workflowIdFilter = filtersBuilder.workflowId
         ? filtersBuilder.workflowId === workflowId
         : true;
-      const searchFilter = name
-        .toLocaleLowerCase()
-        .includes(filtersBuilder.query.toLocaleLowerCase());
+      const query = filtersBuilder.query.toLocaleLowerCase();
+      const searchFilter =
+        name.toLocaleLowerCase().includes(query) ||
+        errorMessage.toLocaleLowerCase().includes(query);
 
       if (filtersBuilder.byStatus !== 'all') {
         statusFilter = status === filtersBuilder.byStatus;
@@ -306,6 +310,46 @@ function selectAllLogs() {
   const logIds = logs?.value.map(({ id }) => id);
 
   selectedLogs.value = logIds;
+}
+async function exportSelectedLogs(type) {
+  const ids = selectedLogs.value;
+  if (ids.length === 0) return;
+
+  const [items, histories, dataRows, ctxRows] = await Promise.all([
+    dbLogs.items.where('id').anyOf(ids).toArray(),
+    dbLogs.histories.where('logId').anyOf(ids).toArray(),
+    dbLogs.logsData.where('logId').anyOf(ids).toArray(),
+    dbLogs.ctxData.where('logId').anyOf(ids).toArray(),
+  ]);
+  const getRowData = (rows, logId) =>
+    rows.find((item) => item.logId === logId)?.data ?? null;
+
+  const payload = items.map((item) => ({
+    ...item,
+    history: getRowData(histories, item.id),
+    data: getRowData(dataRows, item.id),
+    context: getRowData(ctxRows, item.id),
+  }));
+  const exportPayload =
+    type === 'csv'
+      ? payload.map(({ history, data, context, errorDetails, ...summary }) => ({
+          ...summary,
+          historyCount: history?.length || 0,
+          hasData: Boolean(data),
+          hasContext: Boolean(context),
+          errorDetails: errorDetails ? JSON.stringify(errorDetails) : '',
+        }))
+      : payload;
+
+  dataExporter(
+    exportPayload,
+    {
+      name: `workflow-logs-${new Date().toISOString().slice(0, 10)}`,
+      type,
+      addBOMHeader: true,
+    },
+    true
+  );
 }
 
 watch(

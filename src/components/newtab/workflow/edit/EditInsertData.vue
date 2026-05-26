@@ -81,7 +81,7 @@
               </edit-autocomplete>
               <template
                 v-if="
-                  /.xlsx?$/.test(item.filePath) &&
+                  canUseDelimitedFileAction(item.filePath) &&
                   (item.action || item.csvAction)?.includes?.('json')
                 "
               >
@@ -107,6 +107,56 @@
                 class="w-full"
               />
             </edit-autocomplete>
+            <template v-if="!item.isFile && hasMustacheRef(item.value)">
+              <div
+                v-if="hasFileAccess"
+                class="mt-2 flex flex-wrap items-center gap-2"
+              >
+                <ui-checkbox
+                  :model-value="item.autoFile !== false"
+                  @change="item.autoFile = $event"
+                >
+                  <span v-tooltip="autoFileTooltip">
+                    Auto-load file from variable
+                  </span>
+                </ui-checkbox>
+                <template v-if="item.autoFile !== false">
+                  <div class="grow" />
+                  <ui-input
+                    v-model="item.xlsSheet"
+                    label="Sheet (optional)"
+                    placeholder="Sheet1"
+                    class="w-32"
+                  />
+                  <ui-input
+                    v-model="item.xlsRange"
+                    label="Range (optional)"
+                    placeholder="A1:C10"
+                    class="w-32"
+                  />
+                  <ui-select
+                    :model-value="
+                      !item.action || item.action === 'default'
+                        ? 'json'
+                        : item.action
+                    "
+                    placeholder="File Action"
+                    @change="item.action = $event"
+                  >
+                    <option value="json">Read as JSON</option>
+                    <option value="json-header">
+                      Read as JSON with headers
+                    </option>
+                    <option value="base64">Read as base64</option>
+                  </ui-select>
+                </template>
+              </div>
+              <p class="mt-1 text-xs leading-tight text-gray-500">
+                提示：当 <code>{{ mustacheSample }}</code> 解析到的值以
+                <code>.xls/.xlsx/.csv/.json</code>
+                结尾时，将按照所选方式自动读取并解析对应文件。
+              </p>
+            </template>
             <div class="mt-2 flex items-center">
               <ui-button
                 v-tooltip="
@@ -142,7 +192,7 @@
                   <option value="default">Default</option>
                   <option value="base64">Read as base64</option>
                   <optgroup
-                    v-if="/.(csv|xlsx?)$/.test(item.filePath)"
+                    v-if="canUseDelimitedFileAction(item.filePath)"
                     label="CSV/Excel File"
                   >
                     <option value="json">Read as JSON</option>
@@ -209,6 +259,44 @@ const previewState = shallowReactive({
   itemId: '',
 });
 
+function canUseDelimitedFileAction(filePath = '') {
+  return /\.(csv|xlsx?)$/i.test(filePath) || /\{\{.*?\}\}/.test(filePath);
+}
+function hasMustacheRef(str = '') {
+  return typeof str === 'string' && /\{\{[^{}]+\}\}/.test(str);
+}
+const mustacheSample = '{{ref}}';
+const autoFileTooltip =
+  '当输入的值是 {{ref}} 引用且解析为 .xls/.xlsx/.csv/.json 文件路径时，自动读取并按所选方式解析文件内容。';
+function readBlobAsArrayBuffer(blob) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve(reader.result);
+    };
+    reader.readAsArrayBuffer(blob);
+  });
+}
+async function readExcelWorkbook(input) {
+  if (input instanceof Blob) {
+    return readXlsx(await readBlobAsArrayBuffer(input), { type: 'array' });
+  }
+
+  if (input instanceof ArrayBuffer || ArrayBuffer.isView(input)) {
+    return readXlsx(input, { type: 'array' });
+  }
+
+  if (typeof input === 'string') {
+    const base64Index = input.indexOf(',');
+    if (input.startsWith('data:') && base64Index >= 0) {
+      return readXlsx(input.slice(base64Index + 1), { type: 'base64' });
+    }
+
+    return readXlsx(input, { type: 'binary' });
+  }
+
+  throw new Error('Excel file content is not readable');
+}
 function clearPreview() {
   previewState.itemId = '';
   previewState.data = '';
@@ -227,7 +315,10 @@ function addItem() {
     value: '',
     filePath: '',
     isFile: false,
+    autoFile: true,
     action: 'default',
+    xlsSheet: '',
+    xlsRange: '',
   });
 }
 function changeItemType(index, type) {
@@ -250,13 +341,15 @@ function setAsFile(item) {
 async function previewData(index, item) {
   try {
     const path = item.filePath || '';
-    const isExcel = /.xlsx?$/.test(path);
-    const isJSON = path.endsWith('.json');
+    const isExcel = /\.xlsx?$/i.test(path);
+    const isJSON = path.toLowerCase().endsWith('.json');
 
     const action = item.action || item.csvAction || 'default';
+    const readAsJson = action.includes('json');
     let responseType = 'text';
 
     if (isJSON) responseType = 'json';
+    else if (isExcel && readAsJson) responseType = 'arraybuffer';
     else if (action === 'base64' || (isExcel && action !== 'default'))
       responseType = 'blob';
 
@@ -265,11 +358,9 @@ async function previewData(index, item) {
       returnValue: true,
     });
 
-    const readAsJson = action.includes('json');
-
     if (action === 'base64') {
       result = await readFileAsBase64(result);
-    } else if (result && path.endsWith('.csv') && readAsJson) {
+    } else if (result && path.toLowerCase().endsWith('.csv') && readAsJson) {
       const parsedCSV = Papa.parse(result, {
         header: action.includes('header'),
       });
@@ -277,10 +368,7 @@ async function previewData(index, item) {
     } else if (isJSON) {
       result = JSON.stringify(result, null, 2);
     } else if (isExcel && readAsJson) {
-      const base64Xls = await readFileAsBase64(result);
-      const wb = readXlsx(base64Xls.slice(base64Xls.indexOf(',')), {
-        type: 'base64',
-      });
+      const wb = await readExcelWorkbook(result);
 
       const inputtedSheet = (item.xlsSheet || '').trim();
       const sheetName = wb.SheetNames.includes(inputtedSheet)

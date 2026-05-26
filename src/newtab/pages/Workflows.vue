@@ -106,7 +106,7 @@ function closeTab(index, tab) {
 function getTabTitle() {
   if (route.name === 'workflows') return 'Workflows';
 
-  return `${document.title}`.replace(' - Automa', '');
+  return `${document.title}`.replace(' - 税务自动填报助手', '');
 }
 
 watch(

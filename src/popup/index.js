@@ -4,6 +4,7 @@ import router from './router';
 import pinia from '../lib/pinia';
 import compsUi from '../lib/compsUi';
 import vueI18n from '../lib/vueI18n';
+import vueToastification from '../lib/vue-toastification';
 import vRemixicon, { icons } from '../lib/vRemixicon';
 import '../assets/css/tailwind.css';
 import '../assets/css/fonts.css';
@@ -14,6 +15,7 @@ createApp(App)
   .use(compsUi)
   .use(vueI18n)
   .use(pinia)
+  .use(vueToastification)
   .use(vRemixicon, icons)
   .mount('#app');
 

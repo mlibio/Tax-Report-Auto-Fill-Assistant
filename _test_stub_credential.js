@@ -1,0 +1,1 @@
+module.exports = { default: { decrypt: v => v } };

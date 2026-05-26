@@ -1,6 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Automa-Dev",
+  "name": "税务自动填报助手（开发）",
+  "description": "在浏览器中本地运行税务报表自动填报工作流（开发构建），无需联网。",
   "minimum_chrome_version": "116",
   "action": {
     "default_popup": "popup.html",
@@ -19,14 +20,14 @@
         "default": "Alt+A",
         "mac": "Alt+A"
       },
-      "description": "Open the dashboard"
+      "description": "打开本地工作流工作台"
     },
     "element-picker": {
       "suggested_key": {
         "default": "Alt+P",
         "mac": "Alt+P"
       },
-      "description": "Open element picker"
+      "description": "打开元素选择器"
     }
   },
   "host_permissions": ["<all_urls>"],
@@ -37,16 +38,6 @@
       "run_at": "document_start",
       "match_about_blank": true,
       "all_frames": true
-    },
-    {
-      "matches": [
-        "http://localhost/*",
-        "*://*.automa.site/*",
-        "*://automa.vercel.app/*"
-      ],
-      "js": ["webService.bundle.js"],
-      "run_at": "document_start",
-      "all_frames": false
     }
   ],
   "optional_permissions": [

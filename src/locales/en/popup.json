@@ -28,5 +28,46 @@
         "local": "Local"
       }
     }
+  },
+  "popup": {
+    "dataPrep": "Data preparation",
+    "execute": "Run",
+    "importReport": "Import report data",
+    "importWorkflow": "Import workflow",
+    "recordWorkflow": "Record workflow",
+    "arrangeWorkflow": "Edit workflow",
+    "elementSelector": "Element selector",
+    "savedReportVars": "Saved report data",
+    "executeWorkflow": "Execute",
+    "selectReportVar": "Report file",
+    "selectWorkflow": "Workflow",
+    "noWorkflows": "No workflows yet. Import or create one first.",
+    "needWorkflow": "Please select a workflow.",
+    "needReport": "Please select a report file.",
+    "settings": "Settings",
+    "reportName": "Report name",
+    "reportFilePath": "Report file path",
+    "reportModalTitle": "Import report data",
+    "reportSave": "Save",
+    "duplicateReportName": "This report name already exists.",
+    "invalidReportFileType": "Report files are limited to .xls and .xlsx.",
+    "removeVar": "Remove",
+    "taxFilePathHint": "When a report is selected, its file path is assigned to variable param0. You can also run a workflow without selecting a report.",
+    "workflowManage": "Workflow management",
+    "dataManage": "Data management",
+    "logs": {
+      "title": "Logs",
+      "empty": "No logs yet",
+      "exportJson": "Export JSON",
+      "exportCsv": "Export CSV"
+    },
+    "importWorkflowDone": "Workflow imported"
+  },
+  "log": {
+    "delete": {
+      "title": "Delete logs",
+      "description": "Delete selected logs?"
+    },
+    "deleteSelected": "Delete selected"
   }
 }

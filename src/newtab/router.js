@@ -1,11 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
-import Welcome from './pages/Welcome.vue';
-import Packages from './pages/Packages.vue';
 import Workflows from './pages/workflows/index.vue';
 import WorkflowContainer from './pages/Workflows.vue';
-import WorkflowHost from './pages/workflows/Host.vue';
 import WorkflowDetails from './pages/workflows/[id].vue';
-import WorkflowShared from './pages/workflows/Shared.vue';
 import ScheduledWorkflow from './pages/ScheduledWorkflow.vue';
 import Storage from './pages/Storage.vue';
 import StorageTables from './pages/storage/Tables.vue';
@@ -14,10 +10,9 @@ import Recording from './pages/Recording.vue';
 import Settings from './pages/Settings.vue';
 import SettingsIndex from './pages/settings/SettingsIndex.vue';
 import SettingsAbout from './pages/settings/SettingsAbout.vue';
-import SettingsProfile from './pages/settings/SettingsProfile.vue';
 import SettingsShortcuts from './pages/settings/SettingsShortcuts.vue';
-import SettingsBackup from './pages/settings/SettingsBackup.vue';
 import SettingsEditor from './pages/settings/SettingsEditor.vue';
+import TaxFiling from './pages/TaxFiling.vue';
 
 const routes = [
   {
@@ -27,24 +22,9 @@ const routes = [
     component: Workflows,
   },
   {
-    name: 'welcome',
-    path: '/welcome',
-    component: Welcome,
-  },
-  {
-    name: 'packages',
-    path: '/packages',
-    component: Packages,
-  },
-  {
     name: 'recording',
     path: '/recording',
     component: Recording,
-  },
-  {
-    name: 'packages-details',
-    path: '/packages/:id',
-    component: WorkflowDetails,
   },
   {
     path: '/workflows',
@@ -60,21 +40,6 @@ const routes = [
         name: 'workflows-details',
         component: WorkflowDetails,
       },
-      {
-        name: 'team-workflows',
-        path: '/teams/:teamId/workflows/:id',
-        component: WorkflowDetails,
-      },
-      {
-        name: 'workflow-host',
-        path: '/workflows/:id/host',
-        component: WorkflowHost,
-      },
-      {
-        name: 'workflow-shared',
-        path: '/workflows/:id/shared',
-        component: WorkflowShared,
-      },
     ],
   },
   {
@@ -86,6 +51,11 @@ const routes = [
     name: 'storage',
     path: '/storage',
     component: Storage,
+  },
+  {
+    name: 'tax-data',
+    path: '/tax-data',
+    component: TaxFiling,
   },
   {
     name: 'storage-tables',
@@ -102,9 +72,7 @@ const routes = [
     component: Settings,
     children: [
       { path: '', component: SettingsIndex },
-      { path: '/profile', component: SettingsProfile },
       { path: '/about', component: SettingsAbout },
-      { path: '/backup', component: SettingsBackup },
       { path: '/editor', component: SettingsEditor },
       { path: '/shortcuts', component: SettingsShortcuts },
     ],

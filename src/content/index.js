@@ -290,6 +290,11 @@ async function messageListener({ data, source }) {
         return Boolean(window.initPaletteParams);
       case 'content-script-exists':
         return true;
+      case 'tax-vat-adaptive-summary-alert':
+        setTimeout(() => {
+          window.alert(data.data?.message || '税务页面适配已完成');
+        }, 0);
+        return true;
       case 'automa-element-selector': {
         return elementSelectorInstance();
       }

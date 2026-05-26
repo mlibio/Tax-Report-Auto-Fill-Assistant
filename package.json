@@ -1,7 +1,7 @@
 {
-  "name": "automa",
+  "name": "tax-report-auto-fill-assistant",
   "version": "1.30.00",
-  "description": "An extension for automating your browser by connecting blocks",
+  "description": "A local browser extension for tax report auto-fill workflows",
   "repository": {
     "type": "git",
     "url": "https://github.com/AutomaApp/automa.git"

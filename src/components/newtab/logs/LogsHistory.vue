@@ -77,7 +77,7 @@
         >
           <slot name="prepend" />
           <p
-            v-if="currentLog.history.length === 0"
+            v-if="logHistory.length === 0"
             class="text-center text-gray-300"
           >
             The workflow log is not saved
@@ -179,7 +179,7 @@
         </div>
       </div>
       <div
-        v-if="currentLog.history.length >= 25"
+        v-if="logHistory.length >= 25"
         class="mt-4 lg:flex lg:items-center lg:justify-between"
       >
         <div class="mb-4 lg:mb-0">
@@ -335,6 +335,14 @@ const files = {
   },
 };
 const logsType = {
+  info: {
+    color: 'text-blue-300',
+    icon: 'riInformationLine',
+  },
+  warning: {
+    color: 'text-yellow-300',
+    icon: 'riErrorWarningLine',
+  },
   success: {
     color: 'text-green-400',
     icon: 'riCheckLine',
@@ -377,9 +385,10 @@ const pagination = shallowReactive({
 });
 const activeLog = shallowRef(null);
 
-const translatedLog = computed(() =>
-  props.currentLog.history.map(translateLog)
+const logHistory = computed(() =>
+  Array.isArray(props.currentLog.history) ? props.currentLog.history : []
 );
+const translatedLog = computed(() => logHistory.value.map(translateLog));
 const filteredLog = computed(() => {
   const query = state.search.toLocaleLowerCase();
 
@@ -398,7 +407,7 @@ const history = computed(() =>
 const errorBlock = computed(() => {
   if (props.currentLog.status !== 'error') return null;
 
-  let block = props.currentLog.history.at(-1);
+  let block = logHistory.value.at(-1);
   if (!block || block.type !== 'error' || block.id < 25) return null;
 
   block = translateLog(block);
@@ -539,13 +548,23 @@ function translateLog(log) {
 
     return te(params.path) ? t(params.path, params.params) : def;
   };
+  const translateMessage = (message) => {
+    if (!message || !/^[\w.-]+$/.test(message)) return message;
+
+    return getTranslatation(
+      { path: `log.messages.${message}`, params: log },
+      message
+    );
+  };
 
   if (['finish', 'stop'].includes(log.type)) {
     copyLog.name = t(`log.types.${log.type}`);
   } else {
+    const blockDetail = blocks[log.name];
+    const diagnosticName = getTranslatation(`log.types.${log.name}`, log.name);
     copyLog.name = getTranslatation(
       `workflow.blocks.${log.name}.name`,
-      blocks[log.name].name
+      blockDetail?.name || diagnosticName
     );
   }
 
@@ -553,10 +572,7 @@ function translateLog(log) {
     copyLog.messageId = `${copyLog.message}`;
   }
 
-  copyLog.message = getTranslatation(
-    { path: `log.messages.${log.message}`, params: log },
-    log.message
-  );
+  copyLog.message = translateMessage(log.message);
 
   return copyLog;
 }

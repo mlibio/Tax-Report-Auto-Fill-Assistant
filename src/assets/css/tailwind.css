@@ -18,14 +18,14 @@
 }
 
 :host, :root {
-  --color-primary: 59 130 246;
-  --color-secondary: 96 165 250;
-  --color-accent: 24 24 27;
+  --color-primary: 51 65 85;
+  --color-secondary: 100 116 139;
+  --color-accent: 30 41 59;
 }
 .dark {
-  --color-primary: 96 165 250;
-  --color-secondary: 59 130 246;
-  --color-accent: 244 244 245;
+  --color-primary: 148 163 184;
+  --color-secondary: 100 116 139;
+  --color-accent: 226 232 240;
 }
 
 * {

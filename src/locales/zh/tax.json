@@ -1,0 +1,105 @@
+{
+  "common": {
+    "taxFiling": "增值税申报"
+  },
+  "tax": {
+    "page": {
+      "title": "报表数据管理",
+      "subtitle": "新增、删除并解析本地税务报表文件，以只读方式查看固定模板 Excel 的多 Sheet 原始数据。",
+      "schemaVersion": "模板版本 {version}",
+      "localBadge": "本地运行",
+      "import": "导入 Excel",
+      "importHint": "支持 .xls / .xlsx，仅在本地浏览器中解析，不会上传到任何服务器。",
+      "preview": "解析摘要",
+      "previewEmpty": "请选择报表并点击解析，解析后展示纳税人信息与原始表格。",
+      "report": "校验报告",
+      "reportEmpty": "导入数据后点击「运行校验」获取详细报告。",
+      "runValidation": "运行校验",
+      "gate": "软门禁与执行",
+      "override": "我已阅读上方错误并自行承担风险，强制继续填报",
+      "dryRun": "试运行（仅校验，不打开网站）",
+      "startFiling": "打开税务局并自动填报",
+      "exportDraft": "导出申报底稿（JSON）",
+      "history": "历史填报记录",
+      "historyEmpty": "暂未运行过税务填报工作流。",
+      "chooseFile": "选择申报表 Excel",
+      "fileNotSelected": "尚未选择文件",
+      "fileSelected": "已选择 {name}（{size} KB）",
+      "parseFailed": "解析失败：{msg}",
+      "parseGeneric": "解析失败",
+      "readFail": "读取文件失败",
+      "stepImport": "1. 导入 Excel",
+      "stepPreview": "2. 数据预览",
+      "stepReport": "3. 校验报告",
+      "stepGate": "4. 软门禁与执行",
+      "stepHistory": "5. 历史填报记录",
+      "parsedAt": "解析时间 {time}",
+      "gatePassed": "已通过门禁",
+      "gateHint": "校验存在错误时，需要勾选下方确认才允许启动自动填报。所有勾选与运行均会记录到本地日志，便于审计。",
+      "tableLine": "栏次",
+      "tableItem": "项目",
+      "tableMonth": "一般-本月",
+      "tableYear": "一般-本年",
+      "counts": {
+        "error": "错误 {n}",
+        "warning": "警告 {n}",
+        "info": "提示 {n}"
+      },
+      "findingField": "字段：{field} · 规则：{ruleId}",
+      "noFindings": "未发现需要关注的问题，可以继续填报。",
+      "refresh": "刷新",
+      "manageTitle": "报表数据",
+      "manageHint": "与弹窗「导入报表数据」共用本地存储，后续执行会把所选文件地址写入 TaxFilePath。",
+      "reportName": "报表名称",
+      "variableName": "变量名",
+      "filePath": "报表文件路径",
+      "addReport": "新增报表",
+      "reportList": "报表列表",
+      "noReports": "暂无报表数据，请先新增。",
+      "parse": "解析",
+      "sheetPreview": "Excel 表格只读预览",
+      "readonly": "只读视图",
+      "sheetEmpty": "解析报表后将按 Sheet 展示 Excel 原始表格数据。",
+      "viewDetail": "查看详情",
+      "statusLabel": "状态",
+      "defaultRunName": "增值税申报",
+      "toast": {
+        "parseOk": "解析成功",
+        "dryRun": "试运行完成：错误 {e}，警告 {w}",
+        "workflowStarted": "已触发填报工作流，可在「日志」中查看进度",
+        "triggerFail": "触发失败",
+        "needGate": "请先导入数据并通过门禁",
+        "builtinMissing": "内置工作流尚未注入，请刷新页面后重试"
+      }
+    },
+    "meta": {
+      "taxpayerName": "纳税人名称",
+      "taxpayerNo": "纳税人识别号",
+      "periodRange": "税款所属时间",
+      "legalPerson": "法定代表人",
+      "industry": "所属行业",
+      "phone": "电话号码"
+    },
+    "rules": {
+      "severity": {
+        "error": "错误",
+        "warning": "警告",
+        "info": "提示"
+      }
+    },
+    "blocks": {
+      "tax-vat-load": {
+        "name": "增值税申报-Excel 加载",
+        "description": "解析增值税及附加税费申报表 Excel 为内部数据模型"
+      },
+      "tax-vat-validate": {
+        "name": "增值税申报-数据校验",
+        "description": "运行结构/业务/跨表三层数据校验，输出校验报告"
+      },
+      "tax-vat-fill": {
+        "name": "增值税申报-自动填报",
+        "description": "按字段映射在上海电子税务局填写主表"
+      }
+    }
+  }
+}

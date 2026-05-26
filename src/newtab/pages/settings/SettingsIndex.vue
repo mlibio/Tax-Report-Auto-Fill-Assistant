@@ -41,14 +41,6 @@
           {{ locale.name }}
         </option>
       </ui-select>
-      <a
-        class="ml-1 block text-gray-600 dark:text-gray-200"
-        href="https://github.com/AutomaApp/automa/wiki/Help-Translate"
-        target="_blank"
-        rel="noopener"
-      >
-        {{ t('settings.language.helpTranslate') }}
-      </a>
     </div>
     <p v-if="isLangChange" class="ml-4 inline-block">
       {{ t('settings.language.reloadPage') }}

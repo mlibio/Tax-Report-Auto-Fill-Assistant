@@ -1,0 +1,1 @@
+module.exports = { parseJSON: (s, fb) => { try { return JSON.parse(s); } catch (e) { return fb; } } };

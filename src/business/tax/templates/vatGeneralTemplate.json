@@ -1,0 +1,145 @@
+{
+  "id": "builtin-vat-general-shanghai",
+  "name": "上海增值税一般纳税人申报模板",
+  "builtInVersion": 1,
+  "icon": "riFileChartLine",
+  "description": "内置：解析增值税及附加税费申报表 Excel，做体系化数据校验后，跳转上海电子税务局完成填报。",
+  "isBuiltIn": true,
+  "drawflow": {
+    "edges": [
+      {
+        "id": "edge-trigger-load",
+        "source": "node-trigger",
+        "sourceHandle": "node-trigger-output-1",
+        "target": "node-load",
+        "targetHandle": "node-load-input-1"
+      },
+      {
+        "id": "edge-load-validate",
+        "source": "node-load",
+        "sourceHandle": "node-load-output-1",
+        "target": "node-validate",
+        "targetHandle": "node-validate-input-1"
+      },
+      {
+        "id": "edge-validate-tab",
+        "source": "node-validate",
+        "sourceHandle": "node-validate-output-1",
+        "target": "node-newtab",
+        "targetHandle": "node-newtab-input-1"
+      },
+      {
+        "id": "edge-tab-fill",
+        "source": "node-newtab",
+        "sourceHandle": "node-newtab-output-1",
+        "target": "node-fill",
+        "targetHandle": "node-fill-input-1"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "node-trigger",
+        "label": "trigger",
+        "type": "BlockBasic",
+        "position": { "x": 80, "y": 240 },
+        "data": {
+          "disableBlock": false,
+          "description": "由仪表板「开始填报」按钮触发",
+          "type": "manual",
+          "interval": 60,
+          "delay": 5,
+          "date": "",
+          "time": "00:00",
+          "url": "",
+          "shortcut": "",
+          "activeInInput": false,
+          "isUrlRegex": false,
+          "days": [],
+          "contextMenuName": "",
+          "contextTypes": [],
+          "parameters": [],
+          "preferParamsInTab": false
+        }
+      },
+      {
+        "id": "node-load",
+        "label": "tax-vat-load",
+        "type": "BlockBasic",
+        "position": { "x": 320, "y": 240 },
+        "data": {
+          "disableBlock": false,
+          "description": "解析增值税申报表 Excel 为数据模型",
+          "source": "globalData",
+          "globalDataKey": "vatExcelBase64",
+          "filePath": "",
+          "outputVariable": "vatModel"
+        }
+      },
+      {
+        "id": "node-validate",
+        "label": "tax-vat-validate",
+        "type": "BlockBasic",
+        "position": { "x": 580, "y": 240 },
+        "data": {
+          "disableBlock": false,
+          "description": "运行结构/业务/跨表三层校验",
+          "modelVariable": "vatModel",
+          "reportVariable": "vatValidationReport",
+          "gateMode": "soft",
+          "allowOverride": true
+        }
+      },
+      {
+        "id": "node-newtab",
+        "label": "new-tab",
+        "type": "BlockBasic",
+        "position": { "x": 840, "y": 240 },
+        "data": {
+          "disableBlock": false,
+          "description": "打开上海市电子税务局申报入口",
+          "url": "https://etax.shanghai.chinatax.gov.cn:8443/",
+          "active": true,
+          "inGroup": false,
+          "tabToGroup": "",
+          "updatePrevTab": false,
+          "incognito": false,
+          "customUserAgent": false
+        }
+      },
+      {
+        "id": "node-fill",
+        "label": "tax-vat-fill",
+        "type": "BlockBasic",
+        "position": { "x": 1100, "y": 240 },
+        "data": {
+          "disableBlock": false,
+          "description": "按字段映射在站点中填写主表",
+          "modelVariable": "vatModel",
+          "reportVariable": "vatValidationReport",
+          "skipOptional": false,
+          "delayBetweenFields": 80
+        }
+      }
+    ],
+    "zoom": 1
+  },
+  "table": [],
+  "dataColumns": [],
+  "settings": {
+    "publicId": "",
+    "blockDelay": 0,
+    "saveLog": true,
+    "debugMode": false,
+    "restartTimes": 1,
+    "notification": true,
+    "execContext": "popup",
+    "reuseLastState": false,
+    "inputAutocomplete": true,
+    "onError": "stop-workflow",
+    "executedBlockOnWeb": false,
+    "insertDefaultColumn": false,
+    "defaultColumnName": "column"
+  },
+  "globalData": "{\n  \"vatExcelBase64\": \"\"\n}",
+  "trigger": null
+}

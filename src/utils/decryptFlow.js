@@ -3,7 +3,7 @@ import hmacSHA256 from 'crypto-js/hmac-sha256';
 import AES from 'crypto-js/aes';
 import encUtf8 from 'crypto-js/enc-utf8';
 import { parseJSON } from './helper';
-import getPassKey from './getPassKey';
+import getPassKey from './localPassKey';
 
 export function getWorkflowPass(pass) {
   const key = getPassKey(nanoid());

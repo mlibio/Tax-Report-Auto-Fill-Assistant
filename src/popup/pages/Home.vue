@@ -1,425 +1,380 @@
 <template>
-  <div
-    :class="[!showTab ? 'h-48' : 'h-56']"
-    class="absolute top-0 left-0 w-full rounded-b-2xl bg-accent"
-  ></div>
-  <div
-    :class="[!showTab ? 'mb-6' : 'mb-2']"
-    class="dark relative z-10 px-5 pt-8 text-white placeholder:text-black"
-  >
-    <div class="mb-4 flex items-center">
-      <h1 class="text-xl font-semibold text-white">Automa</h1>
-      <div class="grow"></div>
-      <ui-button
-        v-tooltip.group="
-          'Start recording by opening the dashboard. Click to learn more'
-        "
-        icon
-        class="mr-2"
-        @click="openDocs"
-      >
-        <v-remixicon name="riRecordCircleLine" />
-      </ui-button>
-      <ui-button
-        v-tooltip.group="
-          t(`home.elementSelector.${state.haveAccess ? 'name' : 'noAccess'}`)
-        "
-        icon
-        class="mr-2"
-        @click="initElementSelector"
-      >
-        <v-remixicon name="riFocus3Line" />
-      </ui-button>
-      <ui-button
-        v-tooltip.group="t('common.dashboard')"
-        icon
-        :title="t('common.dashboard')"
-        @click="openDashboard('')"
-      >
-        <v-remixicon name="riHome5Line" />
-      </ui-button>
-    </div>
-    <div class="flex">
-      <ui-input
-        v-model="state.query"
-        :placeholder="`${t('common.search')}...`"
-        autocomplete="off"
-        prepend-icon="riSearch2Line"
-        class="search-input w-full"
-      />
-    </div>
-    <ui-tabs
-      v-if="showTab"
-      v-model="state.activeTab"
-      fill
-      class="mt-1"
-      @change="onTabChange"
-    >
-      <ui-tab value="local">
-        {{ t(`home.workflow.type.local`) }}
-      </ui-tab>
-      <ui-tab v-if="hostedWorkflowStore.toArray.length > 0" value="host">
-        {{ t(`home.workflow.type.host`) }}
-      </ui-tab>
-      <ui-tab v-if="userStore.user?.teams?.length" value="team"> Teams </ui-tab>
-    </ui-tabs>
-  </div>
-  <home-team-workflows
-    v-if="state.retrieved"
-    v-show="state.activeTab === 'team'"
-    :search="state.query"
-  />
-  <div
-    v-if="state.activeTab !== 'team'"
-    class="relative z-20 space-y-2 px-5 pb-5"
-  >
-    <ui-card v-if="workflowStore.getWorkflows.length === 0" class="text-center">
-      <img src="@/assets/svg/alien.svg" />
-      <p class="font-semibold">{{ t('message.empty') }}</p>
-      <ui-button
-        variant="accent"
-        class="mt-6"
-        @click="openDashboard('/workflows')"
-      >
-        {{ t('home.workflow.new') }}
-      </ui-button>
-    </ui-card>
-    <div v-if="pinnedWorkflows.length > 0" class="mt-1 mb-4 border-b pb-4">
-      <div class="mb-1 flex items-center text-gray-300">
-        <v-remixicon name="riPushpin2Line" size="20" class="mr-2" />
-        <span>Pinned workflows</span>
+  <div class="flex min-h-full flex-col bg-slate-50 p-2 text-slate-900">
+    <header class="mb-2 flex shrink-0 items-center gap-2">
+      <img src="@/assets/images/logo.png" alt="" class="h-8 w-auto shrink-0 object-contain" />
+      <div class="min-w-0 flex-1 leading-tight">
+        <h1 class="truncate text-sm font-bold">
+          {{ t('common.productName') }}
+        </h1>
+        <p class="truncate text-[10px] text-slate-500">
+          {{ t('common.productTagline') }}
+        </p>
       </div>
-      <home-workflow-card
-        v-for="workflow in pinnedWorkflows"
-        :key="workflow.id"
-        :workflow="workflow"
-        :tab="state.activeTab"
-        :pinned="true"
-        class="mb-2"
-        @details="openWorkflowPage"
-        @update="updateWorkflow(workflow.id, $event)"
-        @execute="executeWorkflow"
-        @rename="renameWorkflow"
-        @delete="deleteWorkflow"
-        @toggle-pin="togglePinWorkflow(workflow)"
-      />
-    </div>
-    <div
-      :class="{ 'p-2 rounded-lg bg-white': pinnedWorkflows.length === 0 }"
-      class="flex items-center"
+      <button
+        type="button"
+        class="rounded-full p-1.5 text-slate-500 hover:bg-slate-200 hover:text-slate-900"
+        :title="t('popup.settings')"
+        @click="openDashboard('/settings')"
+      >
+        <v-remixicon name="riSettings3Line" size="18" />
+      </button>
+    </header>
+
+    <section
+      class="mb-2 shrink-0 rounded-lg border border-slate-200 bg-white p-2"
     >
-      <ui-select v-model="state.activeFolder" class="flex-1">
-        <option value="">Folder (all)</option>
-        <option
-          v-for="folder in folderStore.items"
-          :key="folder.id"
-          :value="folder.id"
+      <h2 class="mb-1.5 text-xs font-bold text-blue-600">
+        {{ t('popup.dataPrep') }}
+      </h2>
+      <div class="grid grid-cols-2 gap-1.5">
+        <button
+          type="button"
+          class="prep-btn bg-blue-600"
+          @click="openReportModal"
         >
-          {{ folder.name }}
-        </option>
-      </ui-select>
-      <ui-popover class="ml-2">
-        <template #trigger>
-          <ui-button>
-            <v-remixicon name="riSortDesc" class="mr-2 -ml-1" />
-            <span>Sort</span>
-          </ui-button>
-        </template>
-        <div class="w-48">
-          <ui-select v-model="sortState.order" block placeholder="Sort order">
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
-          </ui-select>
-          <ui-select
-            v-model="sortState.by"
-            :placeholder="t('sort.sortBy')"
-            block
-            class="mt-2 flex-1"
+          {{ t('popup.importReport') }}
+        </button>
+        <button
+          type="button"
+          class="prep-btn bg-emerald-600"
+          @click="openDashboard('/workflows')"
+        >
+          {{ t('popup.workflowManage') }}
+        </button>
+        <button
+          type="button"
+          class="prep-btn bg-amber-500"
+          @click="openDashboard('/tax-data')"
+        >
+          {{ t('popup.dataManage') }}
+        </button>
+      </div>
+
+      <ul
+        v-if="reportVars.length"
+        class="mt-2 max-h-16 space-y-1 overflow-y-auto border-t border-slate-100 pt-1.5"
+      >
+        <li
+          v-for="row in reportVars"
+          :key="row.id"
+          class="flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px]"
+        >
+          <span class="min-w-0 flex-1 truncate" :title="row.path">
+            <b>{{ row.label }}</b>
+          </span>
+          <button
+            type="button"
+            class="shrink-0 text-red-600"
+            :title="t('popup.removeVar')"
+            @click="removeReportVar(row.id)"
           >
-            <option v-for="sort in sorts" :key="sort" :value="sort">
-              {{ t(`sort.${sort}`) }}
-            </option>
-          </ui-select>
-        </div>
-      </ui-popover>
-    </div>
-    <home-workflow-card
-      v-for="workflow in workflows"
-      :key="workflow.id"
-      :workflow="workflow"
-      :tab="state.activeTab"
-      :pinned="state.pinnedWorkflows.includes(workflow.id)"
-      @details="openWorkflowPage"
-      @update="updateWorkflow(workflow.id, $event)"
-      @execute="executeWorkflow"
-      @rename="renameWorkflow"
-      @delete="deleteWorkflow"
-      @toggle-pin="togglePinWorkflow(workflow)"
-    />
-    <div
-      v-if="state.showSettingsPopup"
-      class="fixed bottom-5 left-0 m-4 rounded-lg bg-accent p-4 text-white shadow-md dark:text-black z-10"
+            <v-remixicon name="riCloseLine" size="14" />
+          </button>
+        </li>
+      </ul>
+    </section>
+
+    <section
+      class="mb-2 shrink-0 rounded-lg border border-slate-200 bg-white p-2"
     >
-      <p class="text-sm leading-tight">
-        If the workflow runs for less than 5 minutes, set it to run in the
-        background in the
-        <a
-          href="https://docs.extension.automa.site/workflow/settings.html#workflow-execution"
-          class="font-semibold underline"
-          target="_blank"
+      <h2 class="mb-1.5 text-xs font-bold text-emerald-700">
+        {{ t('popup.execute') }}
+      </h2>
+      <div class="grid grid-cols-[1fr_1fr_auto] items-stretch gap-1">
+        <ui-select v-model="execState.reportId" class="min-w-0 text-xs">
+          <option value="">{{ t('popup.selectReportVar') }}</option>
+          <option v-for="row in reportVars" :key="row.id" :value="row.id">
+            {{ row.label }}
+          </option>
+        </ui-select>
+        <ui-select v-model="execState.workflowId" class="min-w-0 text-xs">
+          <option value="">{{ t('popup.selectWorkflow') }}</option>
+          <option
+            v-for="w in sortedWorkflows"
+            :key="w.id"
+            :value="w.id"
+          >
+            {{ w.name }}
+          </option>
+        </ui-select>
+        <button
+          type="button"
+          class="rounded-md bg-emerald-600 px-2.5 text-xs font-bold text-white hover:bg-emerald-700"
+          @click="runWorkflow"
         >
-          workflow settings.
-        </a>
+          {{ t('popup.executeWorkflow') }}
+        </button>
+      </div>
+      <p class="mt-1 text-[10px] text-slate-400">
+        {{ t('popup.taxFilePathHint') }}
       </p>
-      <v-remixicon
-        name="riCloseLine"
-        class="absolute top-2 right-2 cursor-pointer text-gray-300 dark:text-gray-600"
-        size="20"
-        @click="closeSettingsPopup"
-      />
-    </div>
+    </section>
+
+    <section class="min-h-0 flex-1">
+      <popup-logs-panel />
+    </section>
+
+    <ui-modal v-model="reportModal.open" :title="t('popup.reportModalTitle')">
+      <div class="space-y-3 p-1">
+        <ui-input
+          v-model="reportModal.label"
+          :label="t('popup.reportName')"
+          placeholder="5月增值税申报表"
+        />
+        <ui-input
+          v-model="reportModal.path"
+          :label="t('popup.reportFilePath')"
+          placeholder="D:\税务\报表.xls"
+        />
+        <div class="flex justify-end gap-2 pt-2">
+          <ui-button @click="reportModal.open = false">
+            {{ t('common.cancel') }}
+          </ui-button>
+          <ui-button
+            class="bg-blue-600 text-white hover:bg-blue-700"
+            @click="saveReportVariable"
+          >
+            {{ t('popup.reportSave') }}
+          </ui-button>
+        </div>
+      </div>
+    </ui-modal>
   </div>
 </template>
 <script setup>
+import PopupLogsPanel from '@/components/popup/PopupLogsPanel.vue';
 import BackgroundUtils from '@/background/BackgroundUtils';
-import HomeTeamWorkflows from '@/components/popup/home/HomeTeamWorkflows.vue';
-import HomeWorkflowCard from '@/components/popup/home/HomeWorkflowCard.vue';
-import { useDialog } from '@/composable/dialog';
-import { useGroupTooltip } from '@/composable/groupTooltip';
-import { initElementSelector as initElementSelectorFunc } from '@/newtab/utils/elementSelector';
 import RendererWorkflowService from '@/service/renderer/RendererWorkflowService';
-import { useFolderStore } from '@/stores/folder';
-import { useHostedWorkflowStore } from '@/stores/hostedWorkflow';
-import { useTeamWorkflowStore } from '@/stores/teamWorkflow';
-import { useUserStore } from '@/stores/user';
 import { useWorkflowStore } from '@/stores/workflow';
-import { arraySorter, parseJSON } from '@/utils/helper';
+import {
+  loadTaxReportVariables,
+  saveTaxReportVariables,
+} from '@/utils/taxReportVariables';
 import automa from '@business';
-import { computed, onMounted, shallowReactive, watch } from 'vue';
+import { customAlphabet } from 'nanoid';
+import { computed, onMounted, reactive, ref, watch, toRaw } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useToast } from 'vue-toastification';
 import browser from 'webextension-polyfill';
 
-const isMV2 = browser.runtime.getManifest().manifest_version === 2;
+/** Last report variable + workflow chosen in popup execute section */
+const POPUP_EXEC_PREFS_KEY = 'popupExecLastSelection';
 
 const { t } = useI18n();
-const dialog = useDialog();
-const userStore = useUserStore();
-const folderStore = useFolderStore();
+const toast = useToast();
 const workflowStore = useWorkflowStore();
-const teamWorkflowStore = useTeamWorkflowStore();
-const hostedWorkflowStore = useHostedWorkflowStore();
+const nanoid = customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz', 8);
 
-useGroupTooltip();
-
-const sorts = ['name', 'createdAt', 'updatedAt', 'mostUsed'];
-const savedSorts =
-  parseJSON(localStorage.getItem('popup-workflow-sort'), {}) || {};
-
-const sortState = shallowReactive({
-  by: savedSorts.sortBy || 'createdAt',
-  order: savedSorts.sortOrder || 'desc',
-});
-const state = shallowReactive({
-  query: '',
-  teams: [],
-  cardHeight: 255,
-  retrieved: false,
-  haveAccess: true,
-  activeTab: 'local',
-  pinnedWorkflows: [],
-  activeFolder: savedSorts.activeFolder,
-  showSettingsPopup: isMV2
-    ? false
-    : parseJSON(localStorage.getItem('settingsPopup'), true) ?? true,
+const reportVars = ref([]);
+const execState = reactive({
+  reportId: '',
+  workflowId: '',
 });
 
-const pinnedWorkflows = computed(() => {
-  if (state.activeTab !== 'local') return [];
-
-  const list = [];
-  state.pinnedWorkflows.forEach((workflowId) => {
-    const workflow = workflowStore.getById(workflowId);
-    if (
-      !workflow ||
-      !workflow.name
-        .toLocaleLowerCase()
-        .includes(state.query.toLocaleLowerCase())
-    )
-      return;
-
-    list.push(workflow);
-  });
-
-  return list;
+const reportModal = reactive({
+  open: false,
+  label: '',
+  path: '',
 });
-const hostedWorkflows = computed(() => {
-  if (state.activeTab !== 'host') return [];
 
-  return hostedWorkflowStore.toArray.filter((workflow) =>
-    workflow.name.toLocaleLowerCase().includes(state.query.toLocaleLowerCase())
-  );
-});
-const localWorkflows = computed(() => {
-  if (state.activeTab !== 'local') return [];
+let execPrefsHydrated = false;
 
-  const filteredLocalWorkflows = workflowStore.getWorkflows.filter(
-    ({ name, folderId }) => {
-      const isInFolder = !state.activeFolder || state.activeFolder === folderId;
-      const nameMatch = name
-        .toLocaleLowerCase()
-        .includes(state.query.toLocaleLowerCase());
-
-      return isInFolder && nameMatch;
-    }
-  );
-
-  return arraySorter({
-    key: sortState.by,
-    order: sortState.order,
-    data: filteredLocalWorkflows,
-  });
-});
-const workflows = computed(() =>
-  state.activeTab === 'local' ? localWorkflows.value : hostedWorkflows.value
-);
-const showTab = computed(
-  () =>
-    hostedWorkflowStore.toArray.length > 0 || userStore.user?.teams?.length > 0
+/** Workflows sorted by creation time, newest first */
+const sortedWorkflows = computed(() =>
+  [...workflowStore.getWorkflows].sort(
+    (a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0)
+  )
 );
 
-function openDocs() {
-  window.open(
-    'https://docs.extension.automa.site/guide/quick-start.html#recording-actions',
-    '_blank'
+async function loadPopupExecPrefs() {
+  const { [POPUP_EXEC_PREFS_KEY]: raw } = await browser.storage.local.get(
+    POPUP_EXEC_PREFS_KEY
   );
+  return raw && typeof raw === 'object' ? raw : {};
 }
-function closeSettingsPopup() {
-  state.showSettingsPopup = false;
-  localStorage.setItem('settingsPopup', false);
-}
-function togglePinWorkflow(workflow) {
-  const index = state.pinnedWorkflows.indexOf(workflow.id);
-  const copyData = [...state.pinnedWorkflows];
 
-  if (index === -1) {
-    copyData.push(workflow.id);
-  } else {
-    copyData.splice(index, 1);
-  }
-
-  state.pinnedWorkflows = copyData;
-  browser.storage.local.set({
-    pinnedWorkflows: copyData,
-  });
-}
-async function executeWorkflow(workflow) {
-  try {
-    await RendererWorkflowService.executeWorkflow(workflow, workflow.options);
-    window.close();
-  } catch (error) {
-    console.error(error);
-  }
-}
-function updateWorkflow(id, data) {
-  return workflowStore.update({
-    id,
-    data,
-  });
-}
-function renameWorkflow({ id, name }) {
-  dialog.prompt({
-    title: t('home.workflow.rename'),
-    placeholder: t('common.name'),
-    okText: t('common.rename'),
-    inputValue: name,
-    onConfirm: (newName) => {
-      updateWorkflow(id, { name: newName });
+async function persistPopupExecPrefs() {
+  if (!execPrefsHydrated) return;
+  await browser.storage.local.set({
+    [POPUP_EXEC_PREFS_KEY]: {
+      reportId: execState.reportId || '',
+      workflowId: execState.workflowId || '',
     },
   });
 }
-function deleteWorkflow({ id, hostId, name }) {
-  dialog.confirm({
-    title: t('home.workflow.delete'),
-    okVariant: 'danger',
-    body: t('message.delete', { name }),
-    onConfirm: () => {
-      if (state.activeTab === 'local') {
-        workflowStore.delete(id);
-      } else {
-        hostedWorkflowStore.delete(hostId);
-      }
-    },
-  });
-}
-function openDashboard(url) {
-  BackgroundUtils.openDashboard(url);
-}
-async function initElementSelector() {
-  const [tab] = await browser.tabs.query({
-    url: '*://*/*',
-    active: true,
-    currentWindow: true,
-  });
-  if (!tab) return;
-  initElementSelectorFunc(tab).then(() => {
-    window.close();
-  });
-}
-function openWorkflowPage({ id, hostId }) {
-  let url = `/workflows/${id}`;
 
-  if (state.activeTab === 'host') {
-    url = `/workflows/${hostId}/host`;
+async function refreshReportVars() {
+  reportVars.value = await loadTaxReportVariables();
+}
+
+function ensureReportSelection() {
+  if (!reportVars.value.length) {
+    execState.reportId = '';
+    return;
   }
-
-  openDashboard(url);
+  if (
+    !execState.reportId ||
+    !reportVars.value.some((r) => r.id === execState.reportId)
+  ) {
+    execState.reportId = reportVars.value[0].id;
+  }
 }
-function onTabChange(value) {
-  localStorage.setItem('popup-tab', value);
+
+watch(reportVars, ensureReportSelection);
+
+function ensureWorkflowSelection() {
+  const workflows = sortedWorkflows.value;
+  if (!workflows.length) return;
+
+  if (
+    !execState.workflowId ||
+    !workflows.some((workflow) => workflow.id === execState.workflowId)
+  ) {
+    execState.workflowId = workflows[0].id;
+  }
 }
 
 watch(
-  () => [sortState.by, sortState.order, state.activeFolder],
-  ([sortBy, sortOrder, activeFolder]) => {
-    localStorage.setItem(
-      'popup-workflow-sort',
-      JSON.stringify({ sortOrder, sortBy, activeFolder })
-    );
+  () => workflowStore.getWorkflows.map((workflow) => workflow.id).join('|'),
+  () => {
+    ensureWorkflowSelection();
   }
 );
 
-onMounted(async () => {
-  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-  state.haveAccess = /^(https?)/.test(tab.url);
-
-  const storage = await browser.storage.local.get('pinnedWorkflows');
-  state.pinnedWorkflows = storage.pinnedWorkflows || [];
-
-  await folderStore.load();
-  await userStore.loadUser({ storage: localStorage, ttl: 1000 * 60 * 5 });
-  await teamWorkflowStore.loadData();
-
-  let activeTab = localStorage.getItem('popup-tab') || 'local';
-
-  await automa('app');
-
-  if (activeTab === 'team' && !userStore.user?.teams) activeTab = 'local';
-  else if (activeTab === 'host' && hostedWorkflowStore.toArray.length < 1)
-    activeTab = 'local';
-
-  state.retrieved = true;
-  state.activeTab = activeTab;
-
-  if (state.activeFolder) {
-    const folderExist = folderStore.items.some(
-      (folder) => folder.id === state.activeFolder
-    );
-    if (!folderExist) state.activeFolder = '';
+watch(
+  () => [execState.reportId, execState.workflowId],
+  () => {
+    persistPopupExecPrefs();
   }
+);
+
+function openDashboard(url) {
+  BackgroundUtils.openDashboard(url);
+}
+
+function openReportModal() {
+  reportModal.label = '';
+  reportModal.path = '';
+  reportModal.open = true;
+}
+
+function isExcelReportPath(path) {
+  return /\.xlsx?$/i.test(path);
+}
+
+async function saveReportVariable() {
+  const label = (reportModal.label || '').trim();
+  const path = (reportModal.path || '').trim();
+  if (!label || !path) {
+    toast.error(t('message.noData'));
+    return;
+  }
+
+  const list = await loadTaxReportVariables();
+  if (list.some((r) => r.label === label)) {
+    toast.error(t('popup.duplicateReportName'));
+    return;
+  }
+  if (!isExcelReportPath(path)) {
+    toast.error(t('popup.invalidReportFileType'));
+    return;
+  }
+  list.push({
+    id: nanoid(),
+    label,
+    path,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  });
+  await saveTaxReportVariables(list);
+  await refreshReportVars();
+  // Select the newly added report (now first after desc sort)
+  execState.reportId = reportVars.value[0]?.id || '';
+  reportModal.open = false;
+}
+
+async function removeReportVar(id) {
+  const list = (await loadTaxReportVariables()).filter((r) => r.id !== id);
+  await saveTaxReportVariables(list);
+  await refreshReportVars();
+}
+
+async function runWorkflow() {
+  if (!execState.workflowId || !workflowStore.getById(execState.workflowId)) {
+    await workflowStore.loadData();
+    ensureWorkflowSelection();
+  }
+
+  if (!execState.workflowId) {
+    toast.error(t('popup.needWorkflow'));
+    return;
+  }
+
+  const selected = reportVars.value.find((r) => r.id === execState.reportId);
+  const wf = workflowStore.getById(execState.workflowId);
+  if (!wf) {
+    toast.error(t('popup.needWorkflow'));
+    return;
+  }
+
+  const rawWf = toRaw(wf);
+  const prevOpts = rawWf.options || {};
+  const prevData = prevOpts.data || {};
+  const prevVariables = prevData.variables || {};
+  const reportVariables = selected
+    ? { param0: selected.path }
+    : {};
+
+  try {
+    await RendererWorkflowService.executeWorkflow(
+      { ...rawWf, includeTabId: true },
+      {
+        ...prevOpts,
+        data: {
+          ...prevData,
+          variables: {
+            ...prevVariables,
+            ...reportVariables,
+          },
+        },
+      }
+    );
+  } catch (error) {
+    console.error(error);
+    toast.error(t('message.somethingWrong'));
+  }
+}
+
+onMounted(async () => {
+  await automa('app');
+  await workflowStore.loadData();
+  await refreshReportVars();
+
+  const prefs = await loadPopupExecPrefs();
+  const reportList = reportVars.value;
+  const workflows = sortedWorkflows.value;
+
+  if (
+    prefs.reportId &&
+    reportList.some((r) => r.id === prefs.reportId)
+  ) {
+    execState.reportId = prefs.reportId;
+  }
+  if (
+    prefs.workflowId &&
+    workflows.some((w) => w.id === prefs.workflowId)
+  ) {
+    execState.workflowId = prefs.workflowId;
+  }
+
+  ensureReportSelection();
+  ensureWorkflowSelection();
+  execPrefsHydrated = true;
+  await persistPopupExecPrefs();
 });
 </script>
-<style>
-.recording-card {
-  transition: height 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+<style scoped>
+.prep-btn {
+  @apply rounded-md py-2 text-xs font-semibold text-white shadow-sm hover:brightness-95;
 }
 </style>

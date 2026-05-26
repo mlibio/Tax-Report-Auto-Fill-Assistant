@@ -10,9 +10,19 @@ export default async function (str, data, options = {}) {
   if (!hasMustacheTag) {
     return {
       list: {},
+      unresolvedRefs: [],
       value: str,
     };
   }
+
+  // The third argument was historically passed by some callers as a boolean
+  // (`isPopup`), so anything that isn't a plain options object is normalised
+  // to `{}` here. This keeps the new options (`defaultUnresolved`,
+  // `onUnresolvedRef`, ...) safe to use without breaking existing callers.
+  const safeOptions =
+    options && typeof options === 'object' && !Array.isArray(options)
+      ? options
+      : {};
 
   let renderedValue = {};
   const evaluateJS = str.startsWith('!!');
@@ -30,8 +40,10 @@ export default async function (str, data, options = {}) {
     let copyStr = `${str}`;
     if (evaluateJS) copyStr = copyStr.slice(2);
 
-    renderedValue = mustacheReplacer(copyStr, data, options);
+    renderedValue = mustacheReplacer(copyStr, data, safeOptions);
   }
+
+  if (!renderedValue.unresolvedRefs) renderedValue.unresolvedRefs = [];
 
   return renderedValue;
 }

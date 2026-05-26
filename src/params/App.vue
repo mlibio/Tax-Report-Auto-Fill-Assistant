@@ -5,7 +5,7 @@
   >
     <nav class="mb-4 flex w-full items-center border-b p-4">
       <span class="bg-box-transparent rounded-full p-1 dark:bg-none">
-        <img src="@/assets/svg/logo.svg" class="w-10" />
+        <img src="@/assets/images/logo.png" class="h-10 w-auto object-contain" />
       </span>
       <p class="ml-4 text-lg font-semibold">Automa</p>
     </nav>
@@ -221,9 +221,11 @@ async function addWorkflow(workflowId) {
     );
     if (!triggerBlock) return;
 
+    const presetVars = workflow.options?.data?.variables || {};
     const params = triggerBlock.data.parameters.map((param) => ({
       ...param,
-      value: param.defaultValue,
+      value:
+        param.name in presetVars ? presetVars[param.name] : param.defaultValue,
       inputType: param.type === 'string' ? 'text' : 'number',
     }));
 
@@ -260,14 +262,23 @@ function runWorkflow(index, { data, params }) {
   const isParamsValid = isValidParams(params);
   if (!isParamsValid) return;
 
-  const variables = getParamsValues(params);
+  const prevOpts = data.options || {};
+  const prevData = prevOpts.data || {};
+  const variables = {
+    ...(prevData.variables || {}),
+    ...getParamsValues(params),
+  };
   let payload = {
     name: 'background--workflow:execute',
     data: {
       ...data,
       options: {
+        ...prevOpts,
         checkParams: false,
-        data: { variables },
+        data: {
+          ...prevData,
+          variables,
+        },
       },
     },
   };

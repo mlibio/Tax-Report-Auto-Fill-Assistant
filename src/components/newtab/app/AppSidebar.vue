@@ -1,21 +1,31 @@
 <template>
   <aside
-    class="fixed left-0 top-0 z-50 flex h-screen w-16 flex-col items-center bg-white py-6 dark:bg-gray-800"
+    class="fixed left-0 top-0 z-50 flex h-14 w-full items-center border-b border-slate-200 bg-white px-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
   >
-    <img
-      :title="`v${extensionVersion}`"
-      src="@/assets/svg/logo.svg"
-      class="mx-auto mb-4 w-10"
-    />
+    <div class="flex items-center">
+      <img
+        :title="`v${extensionVersion}`"
+        src="@/assets/images/logo.png"
+        class="mr-3 h-9 w-auto object-contain"
+      />
+      <div class="hidden leading-tight sm:block">
+        <p class="text-sm font-semibold text-slate-900 dark:text-white">
+          {{ t('common.productName') }}
+        </p>
+        <p class="text-xs text-slate-500 dark:text-gray-300">
+          {{ t('common.productTagline') }}
+        </p>
+      </div>
+    </div>
     <div
-      class="relative w-full space-y-2 text-center"
+      class="relative ml-6 flex h-full items-center gap-2 text-center"
       @mouseleave="showHoverIndicator = false"
     >
       <div
         v-show="showHoverIndicator"
         ref="hoverIndicator"
-        class="bg-box-transparent absolute left-1/2 h-10 w-10 rounded-lg transition-transform duration-200"
-        style="transform: translate(-50%, 0)"
+        class="absolute top-1/2 h-10 rounded-xl bg-blue-50 transition-transform duration-150"
+        style="transform: translate(0, -50%); width: 0"
       ></div>
       <router-link
         v-for="tab in tabs"
@@ -25,73 +35,50 @@
         custom
       >
         <a
-          v-tooltip:right.group="
+          v-tooltip:bottom.group="
             `${t(`common.${tab.id}`, 2)} ${
               tab.shortcut && `(${tab.shortcut.readable})`
             }`
           "
           :class="{ 'is-active': isActive }"
           :href="tab.id === 'log' ? '#' : href"
-          class="tab relative z-10 flex w-full items-center justify-center"
+          class="tab relative z-10 flex h-10 items-center justify-center rounded-xl px-3 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-gray-200 dark:hover:bg-gray-700"
           @click="navigateLink($event, navigate, tab)"
           @mouseenter="hoverHandler"
         >
-          <div class="inline-block rounded-lg p-2 transition-colors">
+          <div class="inline-block">
             <v-remixicon :name="tab.icon" />
           </div>
+          <span class="ml-2 hidden text-sm font-medium lg:inline">
+            {{ t(`common.${tab.id}`, 2) }}
+          </span>
           <span
             v-if="tab.id === 'log' && runningWorkflowsLen > 0"
-            class="absolute -top-1 right-2 h-4 w-4 rounded-full bg-accent text-xs text-white dark:text-black"
+            class="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white"
           >
             {{ runningWorkflowsLen }}
           </span>
         </a>
       </router-link>
     </div>
-    <hr class="my-4 w-8/12" />
+    <div class="grow"></div>
     <button
-      v-tooltip:right.group="$t('home.elementSelector.name')"
-      class="focus:ring-0"
+      v-tooltip:bottom.group="$t('home.elementSelector.name')"
+      class="mr-3 rounded-xl bg-yellow-100 px-3 py-2 text-yellow-700 transition hover:bg-yellow-200 focus:ring-0"
       @click="injectElementSelector"
     >
       <v-remixicon name="riFocus3Line" />
     </button>
-    <div class="grow"></div>
-    <router-link
-      v-if="userStore.user"
-      v-tooltip:right.group="t('settings.menu.profile')"
-      to="/profile"
-      class="bg-box-transparent inline-block rounded-full p-1 transition-transform hover:scale-110"
+    <div
+      class="mr-3 hidden rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 md:block"
     >
-      <img
-        :src="userStore.user.avatar_url"
-        height="32"
-        width="32"
-        class="rounded-full"
-        alt="User avatar"
-      />
-    </router-link>
-    <ui-popover trigger="mouseenter" placement="right" class="my-4">
-      <template #trigger>
-        <v-remixicon name="riGroupLine" />
-      </template>
-      <p class="mb-2">{{ t('home.communities') }}</p>
-      <ui-list class="w-40">
-        <ui-list-item
-          v-for="item in communities"
-          :key="item.name"
-          :href="item.url"
-          small
-          tag="a"
-          target="_blank"
-          rel="noopener"
-        >
-          <v-remixicon :name="item.icon" class="mr-2" />
-          {{ item.name }}
-        </ui-list-item>
-      </ui-list>
-    </ui-popover>
-    <router-link v-tooltip:right.group="t('settings.menu.about')" to="/about">
+      本地
+    </div>
+    <router-link
+      v-tooltip:bottom.group="t('settings.menu.about')"
+      to="/about"
+      class="rounded-xl bg-slate-100 px-3 py-2 text-slate-600 transition hover:bg-slate-200 dark:bg-gray-700 dark:text-gray-200"
+    >
       <v-remixicon class="cursor-pointer" name="riInformationLine" />
     </router-link>
   </aside>
@@ -102,11 +89,9 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useToast } from 'vue-toastification';
 import browser from 'webextension-polyfill';
-import { useUserStore } from '@/stores/user';
 import { useWorkflowStore } from '@/stores/workflow';
 import { useShortcut, getShortcut } from '@/composable/shortcut';
 import { useGroupTooltip } from '@/composable/groupTooltip';
-import { communities } from '@/utils/shared';
 import { initElementSelector } from '@/newtab/utils/elementSelector';
 import emitter from '@/lib/mitt';
 
@@ -115,7 +100,6 @@ useGroupTooltip();
 const { t } = useI18n();
 const toast = useToast();
 const router = useRouter();
-const userStore = useUserStore();
 const workflowStore = useWorkflowStore();
 
 const extensionVersion = browser.runtime.getManifest().version;
@@ -125,12 +109,6 @@ const tabs = [
     icon: 'riFlowChart',
     path: '/workflows',
     shortcut: getShortcut('page:workflows', '/workflows'),
-  },
-  {
-    id: 'packages',
-    icon: 'mdiPackageVariantClosed',
-    path: '/packages',
-    shortcut: '',
   },
   {
     id: 'schedule',
@@ -143,6 +121,12 @@ const tabs = [
     icon: 'riHardDrive2Line',
     path: '/storage',
     shortcut: getShortcut('page:storage', '/storage'),
+  },
+  {
+    id: 'taxFiling',
+    icon: 'riFileList3Line',
+    path: '/tax-data',
+    shortcut: getShortcut('page:tax-data', '/tax-data'),
   },
   {
     id: 'log',
@@ -190,9 +174,10 @@ function navigateLink(event, navigateFn, tab) {
     navigateFn();
   }
 }
-function hoverHandler({ target }) {
+function hoverHandler({ currentTarget }) {
   showHoverIndicator.value = true;
-  hoverIndicator.value.style.transform = `translate(-50%, ${target.offsetTop}px)`;
+  hoverIndicator.value.style.width = `${currentTarget.offsetWidth}px`;
+  hoverIndicator.value.style.transform = `translate(${currentTarget.offsetLeft}px, -50%)`;
 }
 async function injectElementSelector() {
   try {
@@ -209,13 +194,7 @@ async function injectElementSelector() {
 }
 </script>
 <style scoped>
-.tab.is-active:after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 0;
-  height: 100%;
-  width: 4px;
-  @apply bg-accent dark:bg-gray-100;
+.tab.is-active {
+  @apply bg-blue-600 text-white shadow-sm hover:bg-blue-600 hover:text-white;
 }
 </style>
